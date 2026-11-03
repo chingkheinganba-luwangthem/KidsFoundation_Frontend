@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-jakarta), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --color-primary-navy: #17345F;
+  --color-secondary-blue: #244875;
+  --color-dark-navy: #0E1F38;
+  --color-coral: #F47C61;
+  --color-coral-hover: #E0684E;
+  --color-sky-light: #E7EEF8;
+  --color-warm-cream: #FAF7F2;
+  --color-gold-accent: #D97706;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: #17345F;
+  background-color: #FFFFFF;
+  overflow-x: hidden;
+  line-height: 1.8;
+}
+
+/* Custom scrollbar and utilities */
+::selection {
+  background-color: #F47C61;
+  color: #ffffff;
+}
+
+@keyframes pulse-subtle {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: translateY(6px);
+  }
+}
+
+.animate-scroll-bounce {
+  animation: pulse-subtle 2s infinite ease-in-out;
+}
+
+/* Hide native scrollbar for News & Updates list — custom React scrollbar is used instead */
+.news-scroll-container {
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
+}
+
+.news-scroll-container::-webkit-scrollbar {
+  display: none;
+  /* Chrome/Safari/Edge */
+}
