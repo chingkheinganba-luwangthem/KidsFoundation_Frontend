@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import { SITE_CONFIG } from "@/data/siteConfig";
 import { BackToTopButton } from "@/components/ui/BackToTopButton";
 
 import { Header } from "@/components/layout/Header";
@@ -18,9 +17,10 @@ const jakartaSans = Plus_Jakarta_Sans({
 export const instant = false;
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://kidsfoundation.edu.in"),
-  title: SITE_CONFIG.fullTitle,
-  description: SITE_CONFIG.metaDescription,
+  metadataBase: new URL("https://kidsfoundationimphal.com"),
+  title: "Kids' Foundation | Best School in Imphal, Manipur",
+  description:
+    "Kids' Foundation School, Imphal — Nurturing curious, confident, and capable learners in Manipur since 2005.",
   keywords: [
     "Kids Foundation",
     "Kids Foundation Imphal",
@@ -31,18 +31,11 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Kids' Foundation" }],
   openGraph: {
-    title: SITE_CONFIG.fullTitle,
-    description: SITE_CONFIG.metaDescription,
-    url: "https://kidsfoundation.edu.in",
+    title: "Kids' Foundation | Best School in Imphal, Manipur",
+    description:
+      "Kids' Foundation School, Imphal — Nurturing curious, confident, and capable learners in Manipur since 2005.",
+    url: "https://kidsfoundationimphal.com",
     siteName: "Kids' Foundation",
-    images: [
-      {
-        url: "/images/campus-aerial.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Kids' Foundation Campus, Imphal",
-      },
-    ],
     locale: "en_US",
     type: "website",
   },

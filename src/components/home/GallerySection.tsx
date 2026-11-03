@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { GALLERY_ITEMS, GALLERY_HEADER } from "@/data/gallery";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ImageLightbox } from "@/components/ui/ImageLightbox";
 import { SectionHeaderData, GalleryItemData, GalleryPageData } from "@/types/strapi";
@@ -25,21 +24,21 @@ export function GallerySection({
   const headerLabel =
     galleryPageData?.sectionLabel ||
     headerData?.label ||
-    GALLERY_HEADER.label;
+    "CAMPUS GALLERY";
 
   const headerHeading =
     galleryPageData?.sectionHeading ||
     headerData?.heading ||
-    GALLERY_HEADER.heading;
+    "Life at Kids' Foundation";
 
   const headerDescription =
     galleryPageData?.sectionDescription ||
     headerData?.description ||
-    GALLERY_HEADER.description;
+    "";
 
   const bottomLinkText =
     headerData?.bottomLinkText ||
-    GALLERY_HEADER.bottomLinkText;
+    "View Full Gallery";
 
   const bottomLinkHref =
     headerData?.bottomLinkHref ||
@@ -65,7 +64,7 @@ export function GallerySection({
       }));
     }
 
-    // 2. Fallback: galleryData or GALLERY_ITEMS
+    // 2. Fallback: galleryData
     if (galleryData && galleryData.length > 0) {
       return galleryData.slice(0, 6).map((item) => ({
         id: `gallery-${item.id}`,
@@ -76,8 +75,12 @@ export function GallerySection({
       }));
     }
 
-    return GALLERY_ITEMS.slice(0, 6);
+    return [];
   }, [galleryPageData, galleryData]);
+
+  if (items.length === 0) {
+    return null;
+  }
 
   return (
     <section id="gallery" className="py-12 sm:py-16 lg:py-20 relative bg-white">

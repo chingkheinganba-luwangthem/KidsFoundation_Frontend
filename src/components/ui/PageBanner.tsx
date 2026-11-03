@@ -1,7 +1,6 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { IMAGES } from "@/data/images";
 
 interface PageBannerProps {
   title: string;
@@ -10,27 +9,25 @@ interface PageBannerProps {
 }
 
 export function PageBanner({ title, breadcrumb, image }: PageBannerProps) {
-  const imageMap: Record<string, string> = {
-    contact: "/images/pages_hero_background_image/contact_hero.jpg",
-    "mandatory disclosure": "/images/pages_hero_background_image/mandatorydisclosure_hero.jpg",
-    "mandatory public disclosure": "/images/pages_hero_background_image/mandatorydisclosure_hero.jpg",
-  };
-  const resolvedImage = image || imageMap[title.toLowerCase()] || IMAGES.heroBg;
   return (
     <section className="relative pt-32 sm:pt-36 lg:pt-40 pb-12 sm:pb-16 bg-[#17345F] overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src={resolvedImage}
-          alt={`${title} - Kids' Foundation`}
-          fill
-          sizes="100vw"
-          className="object-cover object-center"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#17345F]/95 via-[#17345F]/85 to-[#17345F]/70" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#17345F]/60 via-transparent to-[#17345F]/30" />
-      </div>
+      {/* Background Image / Overlay */}
+      {image ? (
+        <div className="absolute inset-0 z-0">
+          <Image
+            src={image}
+            alt={`${title} Banner`}
+            fill
+            sizes="100vw"
+            className="object-cover object-center"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#17345F]/95 via-[#17345F]/85 to-[#17345F]/70" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#17345F]/60 via-transparent to-[#17345F]/30" />
+        </div>
+      ) : (
+        <div className="absolute inset-0 z-0 bg-gradient-to-r from-[#17345F] via-[#1d4074] to-[#17345F]" />
+      )}
 
       <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px]">
         {/* Breadcrumb */}

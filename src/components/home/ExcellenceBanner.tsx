@@ -7,13 +7,14 @@ interface ExcellenceBannerProps {
 }
 
 export function ExcellenceBanner({ data }: ExcellenceBannerProps) {
-  const yearsEmblem = data?.yearsEmblem || "20+";
-  const yearsLabel = data?.yearsLabel || "Years";
-  const subtitle = data?.subtitle || "Excellence in Education";
-  const heading = data?.heading || "20+ Years of Academic Excellence";
-  const description =
-    data?.description ||
-    "Nurturing curious, confident, and capable learners in Manipur since 2005.";
+  if (!data?.heading && !data?.yearsEmblem && !data?.description) {
+    return null;
+  }
+  const yearsEmblem = data?.yearsEmblem || "";
+  const yearsLabel = data?.yearsLabel || "";
+  const subtitle = data?.subtitle || "";
+  const heading = data?.heading || "";
+  const description = data?.description || "";
 
   return (
     <section

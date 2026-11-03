@@ -1,8 +1,6 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { SITE_CONFIG } from "@/data/siteConfig";
-import { IMAGES } from "@/data/images";
 import { AboutSectionData, AboutPageData } from "@/types/strapi";
 import { getStrapiMediaUrl } from "@/lib/strapi";
 
@@ -15,22 +13,22 @@ export function AboutSection({ data, aboutPageData }: AboutSectionProps) {
   const label =
     aboutPageData?.storyLabel ||
     data?.label ||
-    SITE_CONFIG.about.label;
+    "";
 
   const heading =
     aboutPageData?.storyHeading ||
     data?.heading ||
-    SITE_CONFIG.about.heading;
+    "";
 
   const paragraph1 =
     (aboutPageData?.storyTopParagraphs && aboutPageData.storyTopParagraphs[0]) ||
     data?.paragraph1 ||
-    SITE_CONFIG.about.paragraph1;
+    "";
 
   const paragraph2 =
     (aboutPageData?.storyTopParagraphs && aboutPageData.storyTopParagraphs[1]) ||
     data?.paragraph2 ||
-    SITE_CONFIG.about.paragraph2;
+    "";
 
   const cleanLinkText = (
     data?.cta?.label && !data.cta.label.toLowerCase().includes("approach")
@@ -43,28 +41,23 @@ export function AboutSection({ data, aboutPageData }: AboutSectionProps) {
   const campusImage =
     getStrapiMediaUrl(aboutPageData?.storyImage) ||
     getStrapiMediaUrl(data?.image) ||
-    IMAGES.aboutCampus;
+    "/images/banner_images/banner.jpg";
 
   const imageAlt =
     aboutPageData?.storyImageAlt ||
     data?.image?.alternativeText ||
-    "Aerial view of Kids' Foundation circular modern school campus";
+    heading ||
+    "Kids' Foundation Campus";
+
+  if (!heading && !paragraph1 && !aboutPageData && !data) {
+    return null;
+  }
 
   return (
     <section
       id="about"
       className="relative py-12 sm:py-16 lg:py-20 bg-[#FAF7F2] overflow-hidden"
     >
-      {/* Subtle organic wavy texture in background */}
-      <div className="absolute inset-0 pointer-events-none opacity-40 -z-0">
-        <Image
-          src={IMAGES.subtleWaveBg}
-          alt="Decorative subtle wave texture"
-          fill
-          className="object-cover object-left-top"
-        />
-      </div>
-
       <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px]">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-16 items-stretch">
           {/* Left Column: Text Content (7 cols on lg) */}

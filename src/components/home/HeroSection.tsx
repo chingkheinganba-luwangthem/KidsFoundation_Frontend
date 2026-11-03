@@ -4,37 +4,25 @@ import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { SITE_CONFIG } from "@/data/siteConfig";
 import { cn } from "@/lib/utils";
-
 import { HeroSectionData } from "@/types/strapi";
 import { getStrapiMediaUrl } from "@/lib/strapi";
-
-const DEFAULT_SLIDES = [
-  { src: "/images/banner_images/banner.jpg", alt: "Kids' Foundation School" },
-];
 
 interface HeroSectionProps {
   data?: HeroSectionData | null;
 }
 
 export function HeroSection({ data }: HeroSectionProps) {
-  const heroBadge = data?.badge ?? SITE_CONFIG.hero.badge;
-  const heroHeadingLine1 = data?.headingLine1 ?? SITE_CONFIG.hero.headingLine1;
-  const heroHeadingLine2 = data?.headingLine2 !== undefined ? data.headingLine2 : SITE_CONFIG.hero.headingLine2;
-  const heroDescription = data?.description ?? SITE_CONFIG.hero.description;
-  const heroPrimaryBtn = {
-    label: data?.primaryCta?.label ?? SITE_CONFIG.hero.primaryBtn.label,
-    href: data?.primaryCta?.href ?? SITE_CONFIG.hero.primaryBtn.href,
-  };
-  const heroSecondaryBtn = {
-    label: data?.secondaryCta?.label ?? SITE_CONFIG.hero.secondaryBtn.label,
-    href: data?.secondaryCta?.href ?? SITE_CONFIG.hero.secondaryBtn.href,
-  };
-  const heroScrollIndicator = data?.scrollIndicator ?? SITE_CONFIG.hero.scrollIndicator;
+  const heroBadge = data?.badge || "";
+  const heroHeadingLine1 = data?.headingLine1 || "";
+  const heroHeadingLine2 = data?.headingLine2 || "";
+  const heroDescription = data?.description || "";
+  const heroPrimaryBtn = data?.primaryCta || null;
+  const heroSecondaryBtn = data?.secondaryCta || null;
+  const heroScrollIndicator = data?.scrollIndicator || "Scroll to Discover";
 
-  // Strapi slides or local fallback
-  const validSlides =
+  // Strapi slides
+  const slides =
     data?.slides && data.slides.length > 0
       ? data.slides
           .map((s) => ({
@@ -43,8 +31,6 @@ export function HeroSection({ data }: HeroSectionProps) {
           }))
           .filter((s) => Boolean(s.src))
       : [];
-
-  const slides = validSlides.length > 0 ? validSlides : DEFAULT_SLIDES;
 
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
@@ -117,44 +103,56 @@ export function HeroSection({ data }: HeroSectionProps) {
       <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px] w-full">
         <div className="max-w-2xl text-left">
           {/* Badge */}
-          <div className="inline-block mb-3 sm:mb-4">
-            <span className="text-[#FBBF24] font-semibold text-xs sm:text-[13px] tracking-[0.25em] uppercase">
-              {heroBadge}
-            </span>
-          </div>
+          {heroBadge && (
+            <div className="inline-block mb-3 sm:mb-4">
+              <span className="text-[#FBBF24] font-semibold text-xs sm:text-[13px] tracking-[0.25em] uppercase">
+                {heroBadge}
+              </span>
+            </div>
+          )}
 
           {/* Main Heading */}
-          <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-[52px] font-extrabold text-white tracking-tight leading-[1.15] drop-shadow-xs">
-            {heroHeadingLine1}
-            {heroHeadingLine2 ? (
-              <>
-                <br />
-                {heroHeadingLine2}
-              </>
-            ) : null}
-          </h1>
+          {heroHeadingLine1 && (
+            <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-[52px] font-extrabold text-white tracking-tight leading-[1.15] drop-shadow-xs">
+              {heroHeadingLine1}
+              {heroHeadingLine2 ? (
+                <>
+                  <br />
+                  {heroHeadingLine2}
+                </>
+              ) : null}
+            </h1>
+          )}
 
           {/* Description */}
-          <p className="mt-4 sm:mt-5 text-sm sm:text-base text-white/85 max-w-xl font-normal leading-relaxed">
-            {heroDescription}
-          </p>
+          {heroDescription && (
+            <p className="mt-4 sm:mt-5 text-sm sm:text-base text-white/85 max-w-xl font-normal leading-relaxed">
+              {heroDescription}
+            </p>
+          )}
 
           {/* Action Buttons */}
-          <div className="mt-7 sm:mt-8 flex flex-wrap items-center gap-3.5">
-            <Link
-              href={heroPrimaryBtn.href}
-              className="inline-flex items-center justify-center bg-[#F47C61] hover:bg-[#E0684E] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-200 active:scale-98"
-            >
-              {heroPrimaryBtn.label}
-            </Link>
+          {(heroPrimaryBtn || heroSecondaryBtn) && (
+            <div className="mt-7 sm:mt-8 flex flex-wrap items-center gap-3.5">
+              {heroPrimaryBtn && (
+                <Link
+                  href={heroPrimaryBtn.href}
+                  className="inline-flex items-center justify-center bg-[#F47C61] hover:bg-[#E0684E] text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-200 active:scale-98"
+                >
+                  {heroPrimaryBtn.label}
+                </Link>
+              )}
 
-            <Link
-              href={heroSecondaryBtn.href}
-              className="inline-flex items-center justify-center bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-medium px-6 py-3 rounded-full border border-white/35 backdrop-blur-xs transition-all duration-200 active:scale-98"
-            >
-              {heroSecondaryBtn.label}
-            </Link>
-          </div>
+              {heroSecondaryBtn && (
+                <Link
+                  href={heroSecondaryBtn.href}
+                  className="inline-flex items-center justify-center bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-medium px-6 py-3 rounded-full border border-white/35 backdrop-blur-xs transition-all duration-200 active:scale-98"
+                >
+                  {heroSecondaryBtn.label}
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -181,42 +179,44 @@ export function HeroSection({ data }: HeroSectionProps) {
 
           {/* Right: Modern Dots + Arrows (Parallel to Scroll to Discover) */}
           <div className="flex justify-end items-center pb-1">
-            <div className="flex items-center gap-3.5 sm:gap-5">
-              {/* Previous Arrow */}
-              <button
-                onClick={prevSlide}
-                aria-label="Previous slide"
-                className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/10 hover:bg-white/25 border border-white/30 text-white flex items-center justify-center transition-all duration-200 backdrop-blur-sm cursor-pointer active:scale-95 shadow-sm"
-              >
-                <ChevronLeft className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
-              </button>
+            {slides.length > 1 && (
+              <div className="flex items-center gap-3.5 sm:gap-5">
+                {/* Previous Arrow */}
+                <button
+                  onClick={prevSlide}
+                  aria-label="Previous slide"
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/10 hover:bg-white/25 border border-white/30 text-white flex items-center justify-center transition-all duration-200 backdrop-blur-sm cursor-pointer active:scale-95 shadow-sm"
+                >
+                  <ChevronLeft className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
+                </button>
 
-              {/* Dots */}
-              <div className="flex items-center gap-2.5">
-                {slides.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => goToSlide(index)}
-                    aria-label={`Go to slide ${index + 1}`}
-                    className={cn(
-                      "h-2 sm:h-2.5 rounded-full transition-all duration-300 cursor-pointer",
-                      index === current
-                        ? "w-7 sm:w-8 bg-[#FBBF24]"
-                        : "w-2 sm:w-2.5 bg-white/50 hover:bg-white/80"
-                    )}
-                  />
-                ))}
+                {/* Dots */}
+                <div className="flex items-center gap-2.5">
+                  {slides.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => goToSlide(index)}
+                      aria-label={`Go to slide ${index + 1}`}
+                      className={cn(
+                        "h-2 sm:h-2.5 rounded-full transition-all duration-300 cursor-pointer",
+                        index === current
+                          ? "w-7 sm:w-8 bg-[#FBBF24]"
+                          : "w-2 sm:w-2.5 bg-white/50 hover:bg-white/80"
+                      )}
+                    />
+                  ))}
+                </div>
+
+                {/* Next Arrow */}
+                <button
+                  onClick={nextSlide}
+                  aria-label="Next slide"
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/10 hover:bg-white/25 border border-white/30 text-white flex items-center justify-center transition-all duration-200 backdrop-blur-sm cursor-pointer active:scale-95 shadow-sm"
+                >
+                  <ChevronRight className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
+                </button>
               </div>
-
-              {/* Next Arrow */}
-              <button
-                onClick={nextSlide}
-                aria-label="Next slide"
-                className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/10 hover:bg-white/25 border border-white/30 text-white flex items-center justify-center transition-all duration-200 backdrop-blur-sm cursor-pointer active:scale-95 shadow-sm"
-              >
-                <ChevronRight className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </div>

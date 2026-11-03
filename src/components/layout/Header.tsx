@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, Search, ChevronDown, ArrowRight } from "lucide-react";
-import { IMAGES } from "@/data/images";
 import { cn } from "@/lib/utils";
 import { searchSite } from "@/data/searchData";
 import { HeaderData, GlobalSettingData } from "@/types/strapi";
@@ -18,9 +17,9 @@ interface HeaderProps {
 
 export function Header({ headerData, globalData }: HeaderProps = {}) {
   const logo = headerData?.logo || globalData?.logo;
-  const logoSrc = logo ? getStrapiMediaUrl(logo) : IMAGES.logo;
-  const schoolName = headerData?.schoolName || globalData?.schoolName || "KIDS' FOUNDATION";
-  const locationText = headerData?.location || globalData?.location || "IMPHAL, MANIPUR";
+  const logoSrc = logo ? getStrapiMediaUrl(logo) : "";
+  const schoolName = headerData?.schoolName || globalData?.schoolName || "";
+  const locationText = headerData?.location || globalData?.location || "";
   const topNoticeText = headerData?.topNoticeText || globalData?.topNoticeText;
   const topNoticeLink = headerData?.topNoticeLink || globalData?.topNoticeLink;
   const [isScrolled, setIsScrolled] = useState(false);
@@ -165,24 +164,32 @@ export function Header({ headerData, globalData }: HeaderProps = {}) {
           <div className="flex items-center justify-between gap-3 sm:gap-4">
             {/* Logo & School Name */}
             <Link href="/" className="flex items-center gap-2.5 sm:gap-3.5 lg:gap-4 group shrink-0">
-              <div className="relative w-12 h-12 sm:w-16 sm:h-16 lg:w-[72px] lg:h-[72px] shrink-0 transition-transform duration-300 group-hover:scale-105">
-                <Image
-                  src={logoSrc}
-                  alt={`${schoolName} Logo`}
-                  fill
-                  sizes="(max-width: 640px) 48px, (max-width: 1024px) 64px, 72px"
-                  className="object-contain"
-                  priority
-                />
-              </div>
-              <div className="flex flex-col text-left">
-                <span className="text-white font-bold tracking-[0.08em] sm:tracking-[0.12em] text-[13px] sm:text-[16px] lg:text-[17px] uppercase leading-none font-serif">
-                  {schoolName}
-                </span>
-                <span className="text-[#FBBF24] tracking-[0.2em] sm:tracking-[0.26em] text-[9.5px] sm:text-[10.5px] lg:text-[11px] font-medium uppercase leading-tight mt-1">
-                  {locationText}
-                </span>
-              </div>
+              {logoSrc && (
+                <div className="relative w-12 h-12 sm:w-16 sm:h-16 lg:w-[72px] lg:h-[72px] shrink-0 transition-transform duration-300 group-hover:scale-105">
+                  <Image
+                    src={logoSrc}
+                    alt={`${schoolName || "School"} Logo`}
+                    fill
+                    sizes="(max-width: 640px) 48px, (max-width: 1024px) 64px, 72px"
+                    className="object-contain"
+                    priority
+                  />
+                </div>
+              )}
+              {(schoolName || locationText) && (
+                <div className="flex flex-col text-left">
+                  {schoolName && (
+                    <span className="text-white font-bold tracking-[0.08em] sm:tracking-[0.12em] text-[13px] sm:text-[16px] lg:text-[17px] uppercase leading-none font-serif">
+                      {schoolName}
+                    </span>
+                  )}
+                  {locationText && (
+                    <span className="text-[#FBBF24] tracking-[0.2em] sm:tracking-[0.26em] text-[9.5px] sm:text-[10.5px] lg:text-[11px] font-medium uppercase leading-tight mt-1">
+                      {locationText}
+                    </span>
+                  )}
+                </div>
+              )}
             </Link>
 
           {/* Desktop Navigation */}

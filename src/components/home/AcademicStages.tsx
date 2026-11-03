@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ACADEMIC_STAGES, ACADEMIC_STAGES_HEADER } from "@/data/academicStages";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn } from "@/lib/utils";
 import { SectionHeaderData, AcademicStageData, LearningPageData } from "@/types/strapi";
@@ -20,79 +19,70 @@ export function AcademicStages({
   learningPageData,
   stagesData,
 }: AcademicStagesProps) {
-  const headerLabel = headerData?.label || ACADEMIC_STAGES_HEADER.label;
-  const headerHeading = headerData?.heading || ACADEMIC_STAGES_HEADER.heading;
-  const headerDescription = headerData?.description || ACADEMIC_STAGES_HEADER.description;
+  const headerLabel = headerData?.label || "ACADEMIC PATHWAY";
+  const headerHeading = headerData?.heading || "A journey that grows with them.";
+  const headerDescription = headerData?.description || "";
 
   const stages = useMemo(() => {
     // 1. Authoritative: from Learning Page Single Type
     if (learningPageData?.stages && learningPageData.stages.length > 0) {
       return learningPageData.stages.map((s, idx) => {
-        const defaultData =
-          ACADEMIC_STAGES.find((d) => d.id === s.stageId) ||
-          ACADEMIC_STAGES[idx] ||
-          ACADEMIC_STAGES[0];
-
-        const stageKey = s.stageId || defaultData.id;
-
+        const stageKey = s.stageId || `stage-${idx + 1}`;
         const stageImage =
-          getStrapiMediaUrl(s.image) || defaultData.image;
+          getStrapiMediaUrl(s.image) || "/images/banner_images/banner.jpg";
 
         const cleanLinkText = s.bottomText
           ? s.bottomText.replace(/[→\->]/g, "").trim()
-          : (defaultData.linkText ? defaultData.linkText.replace(/[→\->]/g, "").trim() : "Explore Stage");
+          : "Explore Stage";
 
         return {
           id: stageKey,
           tabNumber: `0${idx + 1}.`,
-          tabLabel: s.title || defaultData.tabLabel,
-          subLabel: s.subLabel || defaultData.subLabel,
-          heading: s.boldIntro || s.title || defaultData.heading,
+          tabLabel: s.title || `Stage ${idx + 1}`,
+          subLabel: s.subLabel || s.title || "",
+          heading: s.boldIntro || s.title || `Stage ${idx + 1}`,
           description:
-            (Array.isArray(s.description) ? s.description[0] : s.description) ||
-            defaultData.description,
-          tags:
-            s.activities && s.activities.length > 0
-              ? s.activities
-              : defaultData.tags,
+            (Array.isArray(s.description) ? s.description[0] : s.description) || "",
+          tags: s.activities || [],
           linkText: cleanLinkText,
-          linkHref: `/learning#${s.stageId || stageKey}`,
+          linkHref: `/learning#${stageKey}`,
           image: stageImage,
-          imageAlt: s.imageAlt || s.title || defaultData.imageAlt,
+          imageAlt: s.imageAlt || s.title || "Kids' Foundation Learning",
         };
       });
     }
 
-    // 2. Fallback: stagesData or ACADEMIC_STAGES
+    // 2. Fallback: stagesData
     if (stagesData && stagesData.length > 0) {
       return stagesData.map((s, idx) => {
-        const defaultData = ACADEMIC_STAGES[idx] || ACADEMIC_STAGES[0];
+        const stageKey = s.stageId || `stage-${idx + 1}`;
         const cleanLinkText = s.cta?.label
           ? s.cta.label.replace(/[→\->]/g, "").trim()
-          : (defaultData.linkText ? defaultData.linkText.replace(/[→\->]/g, "").trim() : "Explore Stage");
+          : "Explore Stage";
         return {
-          id: s.stageId || defaultData.id,
-          tabNumber: s.tabNumber || defaultData.tabNumber,
-          tabLabel: s.tabLabel || defaultData.tabLabel,
-          subLabel: s.subLabel || defaultData.subLabel,
-          heading: s.heading || defaultData.heading,
-          description: s.description || defaultData.description,
-          tags: s.tags && s.tags.length > 0 ? s.tags : defaultData.tags,
+          id: stageKey,
+          tabNumber: s.tabNumber || `0${idx + 1}.`,
+          tabLabel: s.tabLabel || s.heading,
+          subLabel: s.subLabel || "",
+          heading: s.heading || "",
+          description: s.description || "",
+          tags: s.tags && s.tags.length > 0 ? s.tags : [],
           linkText: cleanLinkText,
-          linkHref: s.cta?.href || defaultData.linkHref,
-          image: getStrapiMediaUrl(s.image) || defaultData.image,
-          imageAlt: s.image?.alternativeText || defaultData.imageAlt,
+          linkHref: s.cta?.href || `/learning#${stageKey}`,
+          image: getStrapiMediaUrl(s.image) || "/images/banner_images/banner.jpg",
+          imageAlt: s.image?.alternativeText || s.heading,
         };
       });
     }
 
-    return ACADEMIC_STAGES.map((s) => ({
-      ...s,
-      linkText: s.linkText.replace(/[→\->]/g, "").trim(),
-    }));
+    return [];
   }, [learningPageData, stagesData]);
 
-  const [activeTabId, setActiveTabId] = useState<string>(stages[0]?.id || "foundational");
+  const [activeTabId, setActiveTabId] = useState<string>(stages[0]?.id || "");
+
+  if (stages.length === 0) {
+    return null;
+  }
 
   const currentStage =
     stages.find((s) => s.id === activeTabId) || stages[0];

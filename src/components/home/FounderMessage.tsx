@@ -2,8 +2,6 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { SITE_CONFIG } from "@/data/siteConfig";
-import { IMAGES } from "@/data/images";
 import { FounderMessageData, AboutPageData } from "@/types/strapi";
 import { getStrapiMediaUrl } from "@/lib/strapi";
 
@@ -16,22 +14,21 @@ export function FounderMessage({ data, aboutPageData }: FounderMessageProps) {
   const heading =
     aboutPageData?.founderHeading ||
     data?.heading ||
-    SITE_CONFIG.founder.heading;
+    "";
 
   const paragraph1 =
     (aboutPageData?.founderParagraphs && aboutPageData.founderParagraphs[0]) ||
     data?.paragraph1 ||
-    SITE_CONFIG.founder.paragraph1;
+    "";
 
   const paragraph2 =
     (aboutPageData?.founderParagraphs && aboutPageData.founderParagraphs[1]) ||
     aboutPageData?.founderQuote ||
     data?.paragraph2 ||
-    SITE_CONFIG.founder.paragraph2;
+    "";
 
   const linkText =
     data?.cta?.label ||
-    SITE_CONFIG.founder.linkText ||
     "Learn more";
 
   const linkHref = data?.cta?.href || "/about#founder";
@@ -39,12 +36,16 @@ export function FounderMessage({ data, aboutPageData }: FounderMessageProps) {
   const photo =
     getStrapiMediaUrl(aboutPageData?.founderImage) ||
     getStrapiMediaUrl(data?.photo) ||
-    IMAGES.founder;
+    "";
 
   const photoAlt =
     aboutPageData?.founderImage?.alternativeText ||
     data?.photo?.alternativeText ||
-    "Founder of Kids' Foundation, Imphal";
+    "Founder of Kids' Foundation";
+
+  if (!heading && !paragraph1 && !aboutPageData && !data) {
+    return null;
+  }
 
   return (
     <section
@@ -57,18 +58,20 @@ export function FounderMessage({ data, aboutPageData }: FounderMessageProps) {
           <div className="flex flex-col lg:flex-row items-end">
 
             {/* Left – Founder Photo */}
-            <div className="w-full lg:w-[34%] xl:w-[32%] flex justify-center lg:justify-start lg:pl-6 xl:pl-8 relative z-20 shrink-0">
-              <div className="relative w-[200px] sm:w-[250px] lg:w-[300px] xl:w-[330px] h-[320px] sm:h-[400px] lg:h-[480px] xl:h-[520px] -mt-16 sm:-mt-24 lg:-mt-36 xl:-mt-40">
-                <Image
-                  src={photo}
-                  alt={photoAlt}
-                  fill
-                  sizes="(max-width: 640px) 200px, (max-width: 1024px) 250px, 330px"
-                  className="object-contain object-bottom drop-shadow-md"
-                  priority
-                />
+            {photo && (
+              <div className="w-full lg:w-[34%] xl:w-[32%] flex justify-center lg:justify-start lg:pl-6 xl:pl-8 relative z-20 shrink-0">
+                <div className="relative w-[200px] sm:w-[250px] lg:w-[300px] xl:w-[330px] h-[320px] sm:h-[400px] lg:h-[480px] xl:h-[520px] -mt-16 sm:-mt-24 lg:-mt-36 xl:-mt-40">
+                  <Image
+                    src={photo}
+                    alt={photoAlt}
+                    fill
+                    sizes="(max-width: 640px) 200px, (max-width: 1024px) 250px, 330px"
+                    className="object-contain object-bottom drop-shadow-md"
+                    priority
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Right – Content */}
             <div className="w-full lg:w-[66%] xl:w-[68%] px-6 sm:px-10 lg:pr-14 lg:pl-4 py-8 sm:py-10 lg:py-12">

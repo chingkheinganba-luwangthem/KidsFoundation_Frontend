@@ -13,7 +13,6 @@ import {
   Award,
 } from "lucide-react";
 import { DisclosureDocument } from "@/data/disclosurePage";
-import { IMAGES } from "@/data/images";
 
 interface DocumentPreviewModalProps {
   document: DisclosureDocument | null;
@@ -112,7 +111,7 @@ export function DocumentPreviewModal({
             {/* Watermark */}
             <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none">
               <Image
-                src={IMAGES.logo}
+                src="/images/logo.png"
                 alt=""
                 width={380}
                 height={380}
@@ -125,7 +124,7 @@ export function DocumentPreviewModal({
               <div className="flex justify-center items-center gap-3 mb-2">
                 <div className="relative w-12 h-12">
                   <Image
-                    src={IMAGES.logo}
+                    src="/images/logo.png"
                     alt="Kids' Foundation"
                     fill
                     sizes="48px"
