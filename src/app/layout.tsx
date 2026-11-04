@@ -14,8 +14,7 @@ const jakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const instant = false;
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://kidsfoundation.globizsapp.com";
