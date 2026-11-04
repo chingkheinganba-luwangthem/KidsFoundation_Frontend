@@ -7,9 +7,6 @@ interface ExcellenceBannerProps {
   data?: ExcellenceBannerData | null;
 }
 
-const FALLBACK_BG =
-  "https://admin.kidsfoundationimphal.com/uploads/a54a2b1e278f7b434d3a1ddf28ee36c49d114969_1_7f6a22b66d.png";
-
 const FALLBACK_EMBLEM =
   "https://admin.kidsfoundationimphal.com/uploads/Group_1_2_0b8940bbdb.png";
 
@@ -33,13 +30,7 @@ export function ExcellenceBanner({ data }: ExcellenceBannerProps) {
     data?.description ||
     "Nurturing curiosity. Inspiring confidence. Shaping futures.";
 
-  // 2. Background image strictly from Strapi API (image1)
-  const bgImage =
-    data?.bgImageUrl ||
-    (data?.image1 ? getStrapiMediaUrl(data.image1) : null) ||
-    FALLBACK_BG;
-
-  // 3. 20+ Hexagon Emblem image strictly from Strapi API (image2)
+  // 2. 20+ Hexagon Emblem image strictly from Strapi API (image2)
   const emblemImage =
     data?.emblemImageUrl ||
     data?.fillImageUrl ||
@@ -49,54 +40,32 @@ export function ExcellenceBanner({ data }: ExcellenceBannerProps) {
   return (
     <section
       aria-label={heading}
-      className="relative z-10 text-white py-12 sm:py-14 md:py-16 lg:py-20 overflow-hidden bg-[#5C6488] bg-gradient-to-r from-[#50577B] via-[#5C6488] to-[#4C5374] border-y border-[#3E435E]"
+      className="relative z-10 text-white py-12 sm:py-14 md:py-16 lg:py-20 overflow-hidden bg-[#5C6488] border-y border-[#4F5779]/50"
     >
-      {/* Decorative delicate curved lines matching design wave lines */}
+      {/* Exact Curve Lines matching the design (viewBox 0 0 1024 334 from original design coordinates) */}
       <svg
         aria-hidden="true"
         className="absolute inset-0 w-full h-full pointer-events-none"
         preserveAspectRatio="none"
-        viewBox="0 0 1440 400"
+        viewBox="0 0 1024 334"
         fill="none"
       >
+        {/* 1. Bottom-Left Arc: entering from left edge at y=191, curving down through (120, 221) under the description */}
         <path
-          d="M-100 450 C 200 400, 350 250, 420 150 C 450 110, 470 50, 480 -50"
-          stroke="rgba(190, 205, 245, 0.16)"
+          d="M 0 191 C 60 191, 100 208, 140 220 C 180 225, 260 225, 380 224"
+          stroke="rgba(255, 255, 255, 0.16)"
           strokeWidth="1.5"
+          strokeLinecap="round"
         />
+
+        {/* 2. Top-Right Arc: entering from top edge at x=820, curving down and right to (1024, 160) */}
         <path
-          d="M-50 480 C 250 430, 400 280, 460 170"
-          stroke="rgba(190, 205, 245, 0.08)"
-          strokeWidth="1.2"
-        />
-        <path
-          d="M 950 -50 C 1050 100, 1200 280, 1550 350"
-          stroke="rgba(190, 205, 245, 0.15)"
+          d="M 820 0 C 840 80, 910 150, 1024 160"
+          stroke="rgba(255, 255, 255, 0.16)"
           strokeWidth="1.5"
-        />
-        <path
-          d="M 1000 -50 C 1100 80, 1240 240, 1580 300"
-          stroke="rgba(190, 205, 245, 0.08)"
-          strokeWidth="1.2"
+          strokeLinecap="round"
         />
       </svg>
-
-      {/* Strapi background image overlay (image1) if available */}
-      {bgImage && (
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay pointer-events-none"
-          style={{
-            backgroundImage: `url('${bgImage}')`,
-          }}
-        />
-      )}
-
-      {/* Subtle depth lighting overlay */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-r from-[#1c2035]/25 via-transparent to-[#1c2035]/20 pointer-events-none"
-      />
 
       {/* Container aligned with the rest of the site (Header, About, Academics, News, Footer) */}
       <div className="relative z-10 max-w-[1400px] w-full mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px]">
