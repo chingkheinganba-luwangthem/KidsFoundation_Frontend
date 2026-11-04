@@ -243,10 +243,10 @@ export async function getHomePageData(): Promise<HomePageData | null> {
   const excellenceBanner: ExcellenceBannerData = {
     eyebrow: ty?.eyebrow || "A LEGACY OF LEARNING AND EXCELLENCE",
     subtitle: ty?.eyebrow || "A LEGACY OF LEARNING AND EXCELLENCE",
-    heading: ty?.heading || "Years of Academic Excellence.",
+    heading: ty?.heading || "Celebrating 20+\nYears of Excellence.",
     description:
       ty?.description ||
-      "For over two decades, we've nurtured curiosity, inspired confidence, and helped young minds discover their potential.",
+      "Nurturing curiosity. Inspiring confidence. Shaping futures.",
     image1: ty?.image1 || null,
     image2: ty?.image2 || null,
     bgImageUrl: bgImg,

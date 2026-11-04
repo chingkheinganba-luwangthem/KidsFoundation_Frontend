@@ -8,23 +8,30 @@ interface ExcellenceBannerProps {
 }
 
 const FALLBACK_BG =
-  "https://admin.kidsfoundationimphal.com/uploads/16d7f95a7d622e2c98b3982021409f378a31f288_1137fae850.png";
+  "https://admin.kidsfoundationimphal.com/uploads/a54a2b1e278f7b434d3a1ddf28ee36c49d114969_1_7f6a22b66d.png";
 
 const FALLBACK_EMBLEM =
-  "https://admin.kidsfoundationimphal.com/uploads/be61bea4d54e9e528b6610d5081fceb0720e75b1_c6cca95edd.png";
+  "https://admin.kidsfoundationimphal.com/uploads/Group_1_2_0b8940bbdb.png";
 
 export function ExcellenceBanner({ data }: ExcellenceBannerProps) {
   if (!data?.heading && !data?.description && !data?.eyebrow && !data?.image1 && !data?.image2) {
     return null;
   }
 
-  // 1. Text content strictly from Strapi API
+  // 1. Text content strictly from Strapi API with Image 2 matching defaults
   const eyebrow =
     data?.eyebrow || data?.subtitle || "A LEGACY OF LEARNING AND EXCELLENCE";
-  const heading = data?.heading || "Years of Academic Excellence.";
+
+  // Format heading with natural line-break matching Image 2
+  let rawHeading = data?.heading || "Celebrating 20+\nYears of Excellence.";
+  if (rawHeading.includes("Celebrating 20+ ") && !rawHeading.includes("\n")) {
+    rawHeading = rawHeading.replace("Celebrating 20+ ", "Celebrating 20+\n");
+  }
+  const heading = rawHeading;
+
   const description =
     data?.description ||
-    "For over two decades, we've nurtured curiosity, inspired confidence, and helped young minds discover their potential.";
+    "Nurturing curiosity. Inspiring confidence. Shaping futures.";
 
   // 2. Background image strictly from Strapi API (image1)
   const bgImage =
@@ -32,7 +39,7 @@ export function ExcellenceBanner({ data }: ExcellenceBannerProps) {
     (data?.image1 ? getStrapiMediaUrl(data.image1) : null) ||
     FALLBACK_BG;
 
-  // 3. 20+ Emblem image strictly from Strapi API (image2)
+  // 3. 20+ Hexagon Emblem image strictly from Strapi API (image2)
   const emblemImage =
     data?.emblemImageUrl ||
     data?.fillImageUrl ||
@@ -42,52 +49,92 @@ export function ExcellenceBanner({ data }: ExcellenceBannerProps) {
   return (
     <section
       aria-label={heading}
-      className="relative z-10 text-white py-6 sm:py-7 md:py-8 px-4 sm:px-6 lg:px-8 overflow-hidden bg-cover bg-center border-y border-[#18263e]"
-      style={{
-        backgroundImage: `url('${bgImage}')`,
-      }}
+      className="relative z-10 text-white py-12 sm:py-14 md:py-16 lg:py-20 px-6 sm:px-10 md:px-14 lg:px-20 xl:px-24 overflow-hidden bg-[#5C6488] bg-gradient-to-r from-[#50577B] via-[#5C6488] to-[#4C5374] border-y border-[#3E435E]"
     >
-      {/* Subtle overlay for text clarity and rich contrast */}
+      {/* Decorative delicate curved lines matching Image 2 wave lines */}
+      <svg
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        preserveAspectRatio="none"
+        viewBox="0 0 1440 400"
+        fill="none"
+      >
+        <path
+          d="M-100 450 C 200 400, 350 250, 420 150 C 450 110, 470 50, 480 -50"
+          stroke="rgba(190, 205, 245, 0.16)"
+          strokeWidth="1.5"
+        />
+        <path
+          d="M-50 480 C 250 430, 400 280, 460 170"
+          stroke="rgba(190, 205, 245, 0.08)"
+          strokeWidth="1.2"
+        />
+        <path
+          d="M 950 -50 C 1050 100, 1200 280, 1550 350"
+          stroke="rgba(190, 205, 245, 0.15)"
+          strokeWidth="1.5"
+        />
+        <path
+          d="M 1000 -50 C 1100 80, 1240 240, 1580 300"
+          stroke="rgba(190, 205, 245, 0.08)"
+          strokeWidth="1.2"
+        />
+      </svg>
+
+      {/* Strapi background image overlay (image1) if available */}
+      {bgImage && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-overlay pointer-events-none"
+          style={{
+            backgroundImage: `url('${bgImage}')`,
+          }}
+        />
+      )}
+
+      {/* Subtle depth lighting overlay */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-r from-[#061226]/35 via-transparent to-[#061226]/35 pointer-events-none"
+        className="absolute inset-0 bg-gradient-to-r from-[#1c2035]/25 via-transparent to-[#1c2035]/20 pointer-events-none"
       />
 
-      {/* Compact Centered Content */}
-      <div className="max-w-[1000px] mx-auto relative z-10 flex flex-col items-center justify-center text-center">
-        {/* 1. Top Eyebrow from API */}
-        {eyebrow && (
-          <span className="text-[#E5A83B] font-bold text-[10px] sm:text-[11px] md:text-xs tracking-[0.24em] uppercase block mb-1 sm:mb-1.5 drop-shadow-xs">
-            {eyebrow}
-          </span>
-        )}
+      {/* 2-Column Responsive Layout Matching Image 2 */}
+      <div className="max-w-[1360px] mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-16 items-center">
+        {/* Left Column: Eyebrow + Heading + Description */}
+        <div className="lg:col-span-7 flex flex-col justify-center text-left">
+          {eyebrow && (
+            <span className="text-[#D4A259] font-bold text-xs sm:text-[13px] tracking-[0.25em] uppercase block mb-3 sm:mb-4 drop-shadow-xs">
+              {eyebrow}
+            </span>
+          )}
 
-        {/* 2. 3D Golden Ribbon 20+ Emblem from API (image2) - compact height */}
+          {heading && (
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-[40px] xl:text-[44px] font-bold text-white tracking-tight leading-[1.18] mb-3.5 sm:mb-4.5 drop-shadow-sm whitespace-pre-line">
+              {heading}
+            </h2>
+          )}
+
+          {description && (
+            <p className="text-[#D8DEFE] text-sm sm:text-base leading-relaxed font-normal max-w-xl drop-shadow-xs">
+              {description}
+            </p>
+          )}
+        </div>
+
+        {/* Right Column: 4 Hexagons Emblem Cluster */}
         {emblemImage && (
-          <div className="relative w-[130px] sm:w-[155px] md:w-[180px] aspect-[3/2] my-0.5 sm:my-1">
-            <Image
-              src={emblemImage}
-              alt={heading || "20+ Years"}
-              fill
-              sizes="(max-width: 640px) 130px, 180px"
-              className="object-contain drop-shadow-md"
-              priority
-            />
+          <div className="lg:col-span-5 flex items-center justify-center lg:justify-end">
+            <div className="relative w-[300px] sm:w-[360px] md:w-[420px] lg:w-[460px] xl:w-[500px] aspect-[4/3] drop-shadow-2xl hover:scale-102 transition-transform duration-500 ease-out">
+              <Image
+                src={emblemImage}
+                alt={heading || "20+ Years of Academic Excellence"}
+                fill
+                sizes="(max-width: 640px) 300px, (max-width: 1024px) 420px, 500px"
+                className="object-contain drop-shadow-2xl"
+                priority
+              />
+            </div>
           </div>
-        )}
-
-        {/* 3. Heading from API */}
-        {heading && (
-          <h2 className="text-lg sm:text-xl md:text-2xl lg:text-[26px] font-bold text-white tracking-tight leading-snug mt-1 sm:mt-1.5 mb-1 sm:mb-1.5 drop-shadow-sm">
-            {heading}
-          </h2>
-        )}
-
-        {/* 4. Description from API */}
-        {description && (
-          <p className="text-white/85 text-xs sm:text-[13px] md:text-sm leading-relaxed font-normal max-w-lg mx-auto drop-shadow-xs">
-            {description}
-          </p>
         )}
       </div>
     </section>
