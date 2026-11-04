@@ -16,7 +16,7 @@ import {
   getGalleryPageData,
 } from "@/lib/strapi";
 
-export const dynamic = "force-dynamic";
+export const instant = false;
 
 export default async function Home() {
   const [

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { getCampusPageData, getStrapiMediaUrl } from "@/lib/strapi";
 import { CampusClient } from "@/components/campus/CampusClient";
 
-export const dynamic = "force-dynamic";
+export const instant = false;
 
 export const metadata: Metadata = {
   title: "Campus Facilities & Tour | Kids' Foundation",

@@ -4,7 +4,7 @@ import { getClubsPageData } from "@/lib/strapi";
 import { Club } from "@/types/strapi";
 import { ClubsClient } from "@/components/clubs/ClubsClient";
 
-export const dynamic = "force-dynamic";
+export const instant = false;
 
 export const metadata: Metadata = {
   title: "Clubs & Activities | Kids' Foundation School",

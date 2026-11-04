@@ -4,7 +4,7 @@ import Image from "next/image";
 import { PageBanner } from "@/components/ui/PageBanner";
 import { getLearningPageData, getStrapiMediaUrl } from "@/lib/strapi";
 
-export const dynamic = "force-dynamic";
+export const instant = false;
 
 export const metadata: Metadata = {
   title: "Learning | Kids' Foundation",
