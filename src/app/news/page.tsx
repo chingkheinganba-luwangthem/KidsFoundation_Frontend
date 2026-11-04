@@ -5,7 +5,7 @@ import { NewsUpdateItem } from "@/types/strapi";
 import { NewsClient } from "@/components/news/NewsClient";
 import { formatAndSortNewsArticles } from "@/lib/newsHelper";
 
-export const instant = false;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "News & Updates | Kids' Foundation School",

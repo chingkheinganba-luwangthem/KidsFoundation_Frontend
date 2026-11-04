@@ -1,1 +1,1 @@
-export { default, metadata, instant } from "@/app/about/sports-and-arts/page";
+export { default, metadata } from "@/app/about/sports-and-arts/page";

@@ -4,7 +4,7 @@ import { getPublicationsPageData } from "@/lib/strapi";
 import { Publication } from "@/types/strapi";
 import { PublicationsClient } from "@/components/publications/PublicationsClient";
 
-export const instant = false;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Publications | Kids' Foundation School",

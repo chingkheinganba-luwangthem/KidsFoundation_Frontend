@@ -4,7 +4,7 @@ import { getEventsPageData } from "@/lib/strapi";
 import { EventItem } from "@/types/strapi";
 import { EventsClient } from "@/components/events/EventsClient";
 
-export const instant = false;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "School Events & Activities | Kids' Foundation",

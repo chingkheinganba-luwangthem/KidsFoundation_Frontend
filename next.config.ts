@@ -5,7 +5,6 @@ const nextConfig: NextConfig = {
   experimental: {
     agentFeedback: true,
   },
-  reactCompiler: true,
   async redirects() {
     return [
       {
@@ -35,14 +34,6 @@ const nextConfig: NextConfig = {
         hostname: "**",
       },
     ],
-  },
-  turbopack: {
-    rules: {
-      "*.css": {
-        loaders: ["@tailwindcss/turbopack"],
-        as: "*.css",
-      },
-    },
   },
 };
 

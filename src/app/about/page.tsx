@@ -5,7 +5,7 @@ import { PageBanner } from "@/components/ui/PageBanner";
 import { GraduationCap } from "lucide-react";
 import { getAboutPageData, getStrapiMediaUrl } from "@/lib/strapi";
 
-export const instant = false;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "About Us | Kids' Foundation",

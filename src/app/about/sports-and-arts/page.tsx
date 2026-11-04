@@ -4,7 +4,7 @@ import Image from "next/image";
 import { PageBanner } from "@/components/ui/PageBanner";
 import { getSportsArtsPageData, getStrapiMediaUrl } from "@/lib/strapi";
 
-export const instant = false;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Sports & Arts | Kids' Foundation",

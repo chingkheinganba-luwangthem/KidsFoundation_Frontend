@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import { getContactPageData, getStrapiMediaUrl } from "@/lib/strapi";
 import { ContactClient } from "@/components/contact/ContactClient";
 
-export const instant = false;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Contact Us | Kids' Foundation School",

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { MandatoryDisclosureClient } from "@/components/disclosure/MandatoryDisclosureClient";
 import { getMandatoryDisclosurePageData } from "@/lib/strapi";
 
-export const instant = false;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Mandatory Public Disclosure | Kids' Foundation",

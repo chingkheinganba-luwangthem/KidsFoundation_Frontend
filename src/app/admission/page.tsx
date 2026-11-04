@@ -4,7 +4,7 @@ import { PageBanner } from "@/components/ui/PageBanner";
 import { Download } from "lucide-react";
 import { getAdmissionPageData } from "@/lib/strapi";
 
-export const instant = false;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Admission | Kids' Foundation",

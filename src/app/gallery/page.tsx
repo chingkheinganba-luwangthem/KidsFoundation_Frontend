@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { getGalleryPageData, getStrapiMediaUrl } from "@/lib/strapi";
 import { GalleryClient } from "@/components/gallery/GalleryClient";
 
-export const instant = false;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Photo Gallery | Kids' Foundation",
