@@ -12,22 +12,11 @@ import {
   Award,
 } from "lucide-react";
 
-const DEFAULT_CATEGORIES = [
-  "All",
-  "STEM & Innovation",
-  "Arts & Culture",
-  "Sports & Wellness",
-  "Literary & Debate",
-  "Social & Eco",
-];
-
 interface ClubsClientProps {
   bannerTitle?: string;
   breadcrumb?: string[];
   bannerImage?: string;
-  overviewHeading?: string;
-  overviewDescription?: string;
-  categories?: string[];
+  description?: string;
   clubs: Club[];
 }
 
@@ -49,11 +38,13 @@ function ClubCard({ club }: { club: Club }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
 
         {/* Floating Top Category Badge */}
-        <div className="absolute top-3 left-3 z-10">
-          <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#17345F]/90 backdrop-blur-md text-white shadow-sm">
-            {club.category}
-          </span>
-        </div>
+        {club.category && (
+          <div className="absolute top-3 left-3 z-10">
+            <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-[#17345F]/90 backdrop-blur-md text-white shadow-sm">
+              {club.category}
+            </span>
+          </div>
+        )}
 
         {/* Floating Bottom Info (Members & Schedule) */}
         <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 z-10 text-white text-[11px]">
@@ -82,28 +73,30 @@ function ClubCard({ club }: { club: Club }) {
           </h3>
 
           {/* Description */}
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-3">
+          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed whitespace-pre-line">
             {club.description}
           </p>
 
           {/* Mentor & Schedule Info Strip */}
-          <div className="pt-2 border-t border-slate-100 space-y-1.5 text-xs text-slate-600">
-            {club.meetingSchedule && (
-              <div className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span className="truncate">{club.meetingSchedule}</span>
-              </div>
-            )}
-            {club.mentor && (
-              <div className="flex items-center gap-2">
-                <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                <span className="truncate">
-                  <strong className="text-slate-700">{club.mentor}</strong>
-                  {club.mentorRole && ` · ${club.mentorRole}`}
-                </span>
-              </div>
-            )}
-          </div>
+          {(club.meetingSchedule || club.mentor) && (
+            <div className="pt-2 border-t border-slate-100 space-y-1.5 text-xs text-slate-600">
+              {club.meetingSchedule && (
+                <div className="flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="truncate">{club.meetingSchedule}</span>
+                </div>
+              )}
+              {club.mentor && (
+                <div className="flex items-center gap-2">
+                  <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="truncate">
+                    <strong className="text-slate-700">{club.mentor}</strong>
+                    {club.mentorRole && ` · ${club.mentorRole}`}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Recent Highlight Badge */}
           {club.recentHighlight && (
@@ -124,17 +117,37 @@ export function ClubsClient({
   bannerTitle = "Clubs & Activities",
   breadcrumb = ["Home", "Clubs & Activities"],
   bannerImage,
-  overviewHeading = "Beyond the Textbook: Cultivating Curiosity, Leadership & Passion",
-  overviewDescription = "At Kids' Foundation School, learning extends far beyond academic syllabi. Our vibrant clubs and student societies provide every learner the space to discover hidden talents, collaborate with peers across grades, compete in state and national arenas, and build lifelong self-confidence.",
-  categories = DEFAULT_CATEGORIES,
+  description,
   clubs,
 }: ClubsClientProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  // Parse description and optional quote from Strapi
+  const { paragraphs, quote } = useMemo(() => {
+    if (!description) return { paragraphs: [], quote: "" };
 
-  const filteredClubs = useMemo(() => {
-    if (selectedCategory === "All") return clubs;
-    return clubs.filter((club) => club.category === selectedCategory);
-  }, [clubs, selectedCategory]);
+    const quoteIdx = description.search(/["“]/);
+    if (quoteIdx > -1) {
+      const body = description.slice(0, quoteIdx).trim();
+      const q = description.slice(quoteIdx).trim();
+      const paras = body
+        .split(/\n\s*\n/)
+        .map((p) => p.replace(/\r?\n/g, " ").trim())
+        .filter(Boolean);
+      return {
+        paragraphs: paras.length > 0 ? paras : [body.replace(/\r?\n/g, " ")],
+        quote: q.replace(/\r?\n/g, " "),
+      };
+    }
+
+    const paras = description
+      .split(/\n\s*\n/)
+      .map((p) => p.replace(/\r?\n/g, " ").trim())
+      .filter(Boolean);
+
+    return {
+      paragraphs: paras.length > 0 ? paras : [description.replace(/\r?\n/g, " ").trim()],
+      quote: "",
+    };
+  }, [description]);
 
   return (
     <div className="relative flex-1 flex flex-col bg-slate-50 font-sans">
@@ -146,69 +159,39 @@ export function ClubsClient({
           image={bannerImage || undefined}
         />
 
-        <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px] py-10 sm:py-16 space-y-12">
-          {/* Philosophy / Overview Card */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-10 shadow-sm relative overflow-hidden">
-            <div className="max-w-3xl space-y-4 relative z-10">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#17345F] tracking-tight leading-tight">
-                {overviewHeading}
-              </h2>
-
-              <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-                {overviewDescription}
-              </p>
-            </div>
-          </div>
-
-          {/* Category Filter Controls */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
-                    selectedCategory === cat
-                      ? "bg-[#17345F] text-white shadow-md shadow-[#17345F]/20"
-                      : "bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200"
-                  }`}
+        <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px] py-10 sm:py-16 space-y-10 sm:space-y-12">
+          {/* Introductory Description Section from Strapi */}
+          {description && (
+            <div className="max-w-4xl space-y-4">
+              {paragraphs.map((p, idx) => (
+                <p
+                  key={idx}
+                  className="text-sm sm:text-base lg:text-[16.5px] text-[#475569] leading-[1.8] sm:leading-[1.85]"
                 >
-                  {cat}
-                </button>
+                  {p}
+                </p>
               ))}
-            </div>
 
-            {/* Results count indicator */}
-            <div className="flex items-center justify-between text-xs sm:text-sm text-slate-500 px-1">
-              <span>
-                Showing <strong>{filteredClubs.length}</strong> active club
-                {filteredClubs.length === 1 ? "" : "s"}
-                {selectedCategory !== "All" && ` in "${selectedCategory}"`}
-              </span>
+              {quote && (
+                <p className="text-base sm:text-lg italic text-[#17345F] font-serif border-l-2 border-[#F47C61] pl-4 py-1 mt-4">
+                  {quote}
+                </p>
+              )}
             </div>
-          </div>
+          )}
 
           {/* Clubs Grid */}
-          {filteredClubs.length === 0 ? (
+          {clubs.length === 0 ? (
             <div className="text-center py-16 px-4 bg-white rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
               <h3 className="text-lg font-bold text-slate-800">No Clubs Found</h3>
               <p className="text-slate-500 text-sm max-w-md mx-auto">
-                No clubs found in this category.
+                No active clubs found at this time.
               </p>
-              <button
-                onClick={() => setSelectedCategory("All")}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#17345F] text-white text-sm font-semibold hover:bg-[#122847] transition-all"
-              >
-                View All Clubs
-              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {filteredClubs.map((club) => (
-                <ClubCard
-                  key={club.id}
-                  club={club}
-                />
+              {clubs.map((club) => (
+                <ClubCard key={club.id} club={club} />
               ))}
             </div>
           )}

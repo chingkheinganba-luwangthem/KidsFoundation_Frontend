@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, Search, ChevronDown, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { searchSite } from "@/data/searchData";
-import { HeaderData, GlobalSettingData } from "@/types/strapi";
+import { HeaderData, GlobalSettingData, HeaderMenuItem } from "@/types/strapi";
 import { getStrapiMediaUrl } from "@/lib/strapi";
 
 interface HeaderProps {
@@ -15,17 +15,97 @@ interface HeaderProps {
   globalData?: GlobalSettingData | null;
 }
 
+function normalizeMenuUrl(url: string = ""): string {
+  const clean = url.trim();
+  if (!clean || clean === "#") return "#";
+  if (clean === "/home") return "/";
+  if (clean === "/event") return "/events";
+  if (clean === "/news-updates") return "/news";
+  if (clean === "/publication") return "/news/publications";
+  if (clean === "/clubs-activities") return "/clubs-and-activities";
+  if (clean === "/sports-and-arts") return "/about/sports-and-arts";
+  return clean;
+}
+
+function formatLabel(label: string = ""): string {
+  const trimmed = label.trim();
+  if (!trimmed) return "";
+  if (trimmed === trimmed.toLowerCase()) {
+    return trimmed
+      .split(" ")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+  }
+  return trimmed;
+}
+
+const DEFAULT_MENU_ITEMS: HeaderMenuItem[] = [
+  { id: 1, label: "Home", url: "/" },
+  {
+    id: 2,
+    label: "About",
+    url: "#",
+    children: [
+      { id: 21, label: "About Us", url: "/about" },
+      { id: 22, label: "Learning", url: "/learning" },
+      { id: 23, label: "Campus", url: "/campus" },
+      { id: 24, label: "Sports & Arts", url: "/about/sports-and-arts" },
+    ],
+  },
+  { id: 3, label: "Gallery", url: "/gallery" },
+  { id: 4, label: "Admissions", url: "/admission" },
+  {
+    id: 5,
+    label: "News & Events",
+    url: "#",
+    children: [
+      { id: 51, label: "Events", url: "/events" },
+      { id: 52, label: "News & Updates", url: "/news" },
+      { id: 53, label: "Publications", url: "/news/publications" },
+    ],
+  },
+  { id: 6, label: "Clubs & Activities", url: "/clubs-and-activities" },
+  { id: 7, label: "Contact", url: "/contact" },
+];
+
 export function Header({ headerData, globalData }: HeaderProps = {}) {
   const logo = headerData?.logo || globalData?.logo;
   const logoSrc = logo ? getStrapiMediaUrl(logo) : "";
-  const schoolName = headerData?.schoolName || globalData?.schoolName || "";
-  const locationText = headerData?.location || globalData?.location || "";
+
+  // Parse name into School Name & Location if needed
+  const rawName = headerData?.name || "";
+  let derivedSchoolName = "";
+  let derivedLocation = "";
+  if (rawName) {
+    if (rawName.includes(",")) {
+      const parts = rawName.split(",");
+      derivedSchoolName = parts[0]?.trim() || rawName;
+      derivedLocation = parts.slice(1).join(",").trim();
+    } else {
+      derivedSchoolName = rawName;
+    }
+  }
+
+  const schoolName =
+    headerData?.schoolName ||
+    globalData?.schoolName ||
+    derivedSchoolName ||
+    "";
+  const locationText =
+    headerData?.location ||
+    globalData?.location ||
+    derivedLocation ||
+    "";
+
   const topNoticeText = headerData?.topNoticeText || globalData?.topNoticeText;
   const topNoticeLink = headerData?.topNoticeLink || globalData?.topNoticeLink;
+  const showSearch = headerData?.showSearch !== false;
+
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [aboutDropdownOpen, setAboutDropdownOpen] = useState(false);
-  const [newsDropdownOpen, setNewsDropdownOpen] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState<number | string | null>(null);
+  const [mobileExpandedIds, setMobileExpandedIds] = useState<Record<string | number, boolean>>({});
+
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const pathname = usePathname();
@@ -35,8 +115,7 @@ export function Header({ headerData, globalData }: HeaderProps = {}) {
   if (pathname !== prevPathname) {
     setPrevPathname(pathname);
     setMobileMenuOpen(false);
-    setAboutDropdownOpen(false);
-    setNewsDropdownOpen(false);
+    setOpenDropdownId(null);
   }
 
   useEffect(() => {
@@ -48,76 +127,35 @@ export function Header({ headerData, globalData }: HeaderProps = {}) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
-    return pathname.startsWith(href);
-  };
-
-  const allStrapiLinks = React.useMemo(() => {
-    return [
-      ...(headerData?.navigation || []),
-      ...(headerData?.moreLinks || []),
-      ...(headerData?.actionButtons || []),
-    ];
+  const menuItems = useMemo<HeaderMenuItem[]>(() => {
+    if (headerData?.menu_item && headerData.menu_item.length > 0) {
+      return headerData.menu_item;
+    }
+    return DEFAULT_MENU_ITEMS;
   }, [headerData]);
 
-  const normalizeHref = (href?: string) => {
-    if (!href) return "";
-    return href.toLowerCase().trim().replace(/\/+$/, "").replace(/\s+/g, "-");
+  const isItemActive = (item: HeaderMenuItem) => {
+    const normUrl = normalizeMenuUrl(item.url);
+    if (normUrl === "/") {
+      return pathname === "/";
+    }
+    if (normUrl !== "#" && (pathname === normUrl || pathname.startsWith(`${normUrl}/`))) {
+      return true;
+    }
+    if (item.children && item.children.length > 0) {
+      return item.children.some((child) => {
+        const childNorm = normalizeMenuUrl(child.url);
+        return childNorm !== "#" && (pathname === childNorm || pathname.startsWith(`${childNorm}/`));
+      });
+    }
+    return false;
   };
 
-  const getLabel = (href: string, fallback: string) => {
-    const targetNorm = normalizeHref(href);
-    const match = allStrapiLinks.find((l) => {
-      const norm = normalizeHref(l.href);
-      if (targetNorm === "/about") {
-        return norm === "/about" || norm === "/about-us" || l.label?.toLowerCase().trim() === "about";
-      }
-      return norm === targetNorm;
-    });
-    return match?.label || fallback;
+  const toggleMobileSubmenu = (id: number | string) => {
+    setMobileExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const standardHrefs = React.useMemo(() => new Set([
-    "",
-    "/",
-    "/about",
-    "/about-us",
-    "/learning",
-    "/campus",
-    "/about/sports-and-arts",
-    "/gallery",
-    "/admission",
-    "/events",
-    "/news",
-    "/news/publications",
-    "/clubs-and-activities",
-    "/clubs",
-    "/contact",
-  ]), []);
-
-  const extraNavLinks = React.useMemo(() => {
-    return (headerData?.navigation || []).filter((item) => {
-      const norm = normalizeHref(item.href);
-      if (norm === "/about" || norm === "/about-us" || item.label?.toLowerCase().trim() === "about") {
-        return false;
-      }
-      return !standardHrefs.has(norm);
-    });
-  }, [headerData, standardHrefs]);
-
-  const aboutLinks = [
-    { label: getLabel("/about", "About Us"), href: "/about" },
-    { label: getLabel("/learning", "Learning"), href: "/learning" },
-    { label: getLabel("/campus", "Campus"), href: "/campus" },
-    { label: getLabel("/about/sports-and-arts", "Sports & Arts"), href: "/about/sports-and-arts" },
-  ];
-
-  const isAboutActive = aboutLinks.some(
-    (link) => pathname === link.href || (link.href !== "/about" && pathname.startsWith(link.href))
-  );
-
-  const liveResults = React.useMemo(() => {
+  const liveResults = useMemo(() => {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) return [];
     return searchSite(searchQuery).slice(0, 4);
   }, [searchQuery]);
@@ -192,320 +230,260 @@ export function Header({ headerData, globalData }: HeaderProps = {}) {
               )}
             </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-4 xl:gap-5">
-            {/* Home */}
-            <Link
-              href="/"
-              className={cn(
-                "relative text-[13px] xl:text-[14px] font-medium transition-colors py-1 whitespace-nowrap",
-                isActive("/") ? "text-white font-semibold" : "text-white/85 hover:text-white"
-              )}
-            >
-              {getLabel("/", "Home")}
-              {isActive("/") && (
-                <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#FBBF24] rounded-full" />
-              )}
-            </Link>
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center gap-4 xl:gap-5">
+              {menuItems.map((item) => {
+                const hasChildren = Boolean(item.children && item.children.length > 0);
+                const active = isItemActive(item);
+                const isOpen = openDropdownId === (item.id || item.label);
+                const itemHref = normalizeMenuUrl(item.url);
 
-            {/* About Dropdown */}
-            <div
-              className="relative"
-              onMouseEnter={() => setAboutDropdownOpen(true)}
-              onMouseLeave={() => setAboutDropdownOpen(false)}
-            >
-              <button
-                type="button"
-                className={cn(
-                  "inline-flex items-center gap-1 text-[13px] xl:text-[14px] font-medium transition-colors py-1 whitespace-nowrap",
-                  isAboutActive ? "text-white font-semibold" : "text-white/85 hover:text-white"
-                )}
-              >
-                {getLabel("/about", "About")}
-                <ChevronDown
-                  className={cn(
-                    "w-3.5 h-3.5 transition-transform duration-200",
-                    aboutDropdownOpen && "rotate-180"
-                  )}
-                />
-                {isAboutActive && (
-                  <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#FBBF24] rounded-full" />
-                )}
-              </button>
-
-              {aboutDropdownOpen && (
-                <div className="absolute top-full left-0 pt-2 z-50">
-                  <div className="bg-[#17345F]/98 backdrop-blur-xl border border-white/15 rounded-xl shadow-2xl py-2 px-1 min-w-[180px]">
-                    {aboutLinks.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
+                if (hasChildren) {
+                  return (
+                    <div
+                      key={item.id || item.label}
+                      className="relative"
+                      onMouseEnter={() => setOpenDropdownId(item.id || item.label)}
+                      onMouseLeave={() => setOpenDropdownId(null)}
+                    >
+                      <button
+                        type="button"
                         className={cn(
-                          "block px-4 py-2.5 rounded-lg text-[13px] font-medium transition-colors",
-                          pathname === item.href
-                            ? "bg-white/15 text-[#FBBF24] font-semibold"
-                            : "text-white/90 hover:bg-white/10 hover:text-white"
+                          "inline-flex items-center gap-1 text-[13px] xl:text-[14px] font-medium transition-colors py-1 whitespace-nowrap cursor-pointer",
+                          active ? "text-white font-semibold" : "text-white/85 hover:text-white"
                         )}
                       >
-                        {item.label}
-                      </Link>
-                    ))}
+                        {formatLabel(item.label)}
+                        <ChevronDown
+                          className={cn(
+                            "w-3.5 h-3.5 transition-transform duration-200",
+                            isOpen && "rotate-180"
+                          )}
+                        />
+                        {active && (
+                          <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#FBBF24] rounded-full" />
+                        )}
+                      </button>
+
+                      {isOpen && (
+                        <div className="absolute top-full left-0 pt-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                          <div className="bg-[#17345F]/98 backdrop-blur-xl border border-white/15 rounded-xl shadow-2xl py-2 px-1 min-w-[190px]">
+                            {item.children?.map((child) => {
+                              const childHref = normalizeMenuUrl(child.url);
+                              const isChildActive =
+                                pathname === childHref ||
+                                (childHref !== "/" && pathname.startsWith(`${childHref}/`));
+
+                              return (
+                                <Link
+                                  key={child.id || child.label}
+                                  href={childHref}
+                                  className={cn(
+                                    "block px-4 py-2.5 rounded-lg text-[13px] font-medium transition-colors",
+                                    isChildActive
+                                      ? "bg-white/15 text-[#FBBF24] font-semibold"
+                                      : "text-white/90 hover:bg-white/10 hover:text-white"
+                                  )}
+                                >
+                                  {formatLabel(child.label)}
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={item.id || item.label}
+                    href={itemHref}
+                    className={cn(
+                      "relative text-[13px] xl:text-[14px] font-medium transition-colors py-1 whitespace-nowrap",
+                      active ? "text-white font-semibold" : "text-white/85 hover:text-white"
+                    )}
+                  >
+                    {formatLabel(item.label)}
+                    {active && (
+                      <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#FBBF24] rounded-full" />
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Search */}
+            {showSearch && (
+              <div className="relative hidden md:flex items-center shrink-0">
+                <form onSubmit={handleSearch} className="relative">
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => setSearchFocused(true)}
+                    onBlur={() => setTimeout(() => setSearchFocused(false), 250)}
+                    placeholder="Search..."
+                    className="w-36 lg:w-44 focus:w-60 h-9 pl-3.5 pr-9 rounded-full bg-white/10 border border-white/25 text-white text-sm placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/70 focus:bg-white/15 transition-all duration-300"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/70 hover:text-[#FBBF24] transition-colors cursor-pointer"
+                    aria-label="Search"
+                  >
+                    <Search className="w-4 h-4" />
+                  </button>
+                </form>
+
+                {/* Live Suggestions Dropdown */}
+                {searchFocused && liveResults.length > 0 && (
+                  <div className="absolute top-full right-0 mt-2.5 w-80 bg-[#17345F]/98 backdrop-blur-xl border border-white/15 rounded-2xl shadow-2xl p-2 z-50 text-left animate-in fade-in zoom-in-95 duration-150">
+                    <div className="text-[10px] font-semibold text-white/50 uppercase tracking-wider px-3 py-1">
+                      Quick Matches
+                    </div>
+                    <div className="space-y-1">
+                      {liveResults.map((item) => (
+                        <Link
+                          key={item.id}
+                          href={item.href}
+                          onClick={() => {
+                            setSearchFocused(false);
+                            setSearchQuery("");
+                          }}
+                          className="block px-3 py-2 rounded-xl hover:bg-white/10 transition-colors"
+                        >
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-white truncate mr-2">
+                              {item.title}
+                            </span>
+                            <span className="text-[10px] text-[#FBBF24] bg-white/10 px-1.5 py-0.5 rounded-full shrink-0">
+                              {item.category}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-white/70 line-clamp-1 mt-0.5">
+                            {item.description}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onMouseDown={() => {
+                        router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                        setSearchFocused(false);
+                      }}
+                      className="w-full mt-1 pt-2 border-t border-white/10 text-center text-xs text-[#FBBF24] hover:text-white font-medium flex items-center justify-center gap-1 py-1 cursor-pointer"
+                    >
+                      <span>See all results for &ldquo;{searchQuery}&rdquo;</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Gallery */}
-            <Link
-              href="/gallery"
-              className={cn(
-                "relative text-[13px] xl:text-[14px] font-medium transition-colors py-1 whitespace-nowrap",
-                isActive("/gallery") ? "text-white font-semibold" : "text-white/85 hover:text-white"
-              )}
-            >
-              {getLabel("/gallery", "Gallery")}
-              {isActive("/gallery") && (
-                <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#FBBF24] rounded-full" />
-              )}
-            </Link>
-
-            {/* Admissions */}
-            <Link
-              href="/admission"
-              className={cn(
-                "relative text-[13px] xl:text-[14px] font-medium transition-colors py-1 whitespace-nowrap",
-                isActive("/admission") ? "text-white font-semibold" : "text-white/85 hover:text-white"
-              )}
-            >
-              {getLabel("/admission", "Admissions")}
-              {isActive("/admission") && (
-                <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#FBBF24] rounded-full" />
-              )}
-            </Link>
-
-            {/* News & Events Dropdown */}
-            <div
-              className="relative"
-              onMouseEnter={() => setNewsDropdownOpen(true)}
-              onMouseLeave={() => setNewsDropdownOpen(false)}
-            >
-              <button
-                type="button"
-                className={cn(
-                  "inline-flex items-center gap-1 text-[13px] xl:text-[14px] font-medium transition-colors py-1 whitespace-nowrap",
-                  "text-white/85 hover:text-white"
                 )}
-              >
-                {getLabel("/news", "News & Events")}
-                <ChevronDown
-                  className={cn(
-                    "w-3.5 h-3.5 transition-transform duration-200",
-                    newsDropdownOpen && "rotate-180"
-                  )}
-                />
-              </button>
+              </div>
+            )}
 
-              {newsDropdownOpen && (
-                <div className="absolute top-full left-0 pt-2 z-50">
-                  <div className="bg-[#17345F]/98 backdrop-blur-xl border border-white/15 rounded-xl shadow-2xl py-2 px-1 min-w-[180px]">
-                    <Link
-                      href="/events"
-                      className="block px-4 py-2.5 rounded-lg text-[13px] font-medium transition-colors text-white/90 hover:bg-white/10 hover:text-white"
-                    >
-                      {getLabel("/events", "Events")}
-                    </Link>
-                    <Link
-                      href="/news"
-                      className="block px-4 py-2.5 rounded-lg text-[13px] font-medium transition-colors text-white/90 hover:bg-white/10 hover:text-white"
-                    >
-                      {getLabel("/news", "News & Updates")}
-                    </Link>
-                    <Link
-                      href="/news/publications"
-                      className="block px-4 py-2.5 rounded-lg text-[13px] font-medium transition-colors text-white/90 hover:bg-white/10 hover:text-white"
-                    >
-                      {getLabel("/news/publications", "Publications")}
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Clubs & Activities */}
-            <Link
-              href="/clubs-and-activities"
-              className={cn(
-                "relative text-[13px] xl:text-[14px] font-medium transition-colors py-1 whitespace-nowrap",
-                isActive("/clubs-and-activities") || isActive("/clubs")
-                  ? "text-white font-semibold"
-                  : "text-white/85 hover:text-white"
-              )}
+            {/* Mobile Toggle */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-lg text-white hover:bg-white/10 active:bg-white/20"
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             >
-              {getLabel("/clubs-and-activities", "Clubs & Activities")}
-              {(isActive("/clubs-and-activities") || isActive("/clubs")) && (
-                <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#FBBF24] rounded-full" />
-              )}
-            </Link>
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
+        </div>
+      </div>
 
-            {/* Contact */}
-            <Link
-              href="/contact"
-              className={cn(
-                "relative text-[13px] xl:text-[14px] font-medium transition-colors py-1 whitespace-nowrap",
-                isActive("/contact") ? "text-white font-semibold" : "text-white/85 hover:text-white"
-              )}
-            >
-              {getLabel("/contact", "Contact")}
-              {isActive("/contact") && (
-                <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#FBBF24] rounded-full" />
-              )}
-            </Link>
-
-            {/* Any extra navigation items added in Strapi */}
-            {extraNavLinks.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "relative text-[13px] xl:text-[14px] font-medium transition-colors py-1 whitespace-nowrap",
-                  isActive(item.href) ? "text-white font-semibold" : "text-white/85 hover:text-white"
-                )}
-              >
-                {item.label}
-                {isActive(item.href) && (
-                  <span className="absolute -bottom-1 left-0 right-0 h-[2.5px] bg-[#FBBF24] rounded-full" />
-                )}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Search */}
-          <div className="relative hidden md:flex items-center shrink-0">
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden bg-[#17345F]/98 backdrop-blur-xl border-b border-white/10 px-5 sm:px-6 pt-4 pb-6 mt-2 sm:mt-3 space-y-4 max-h-[calc(100vh-80px)] overflow-y-auto overscroll-contain shadow-2xl">
+          {showSearch && (
             <form onSubmit={handleSearch} className="relative">
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setTimeout(() => setSearchFocused(false), 250)}
                 placeholder="Search..."
-                className="w-36 lg:w-44 focus:w-60 h-9 pl-3.5 pr-9 rounded-full bg-white/10 border border-white/25 text-white text-sm placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/70 focus:bg-white/15 transition-all duration-300"
+                className="w-full h-11 pl-4 pr-11 rounded-full bg-white/10 border border-white/25 text-white text-sm placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/60"
               />
-              <button
-                type="submit"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/70 hover:text-[#FBBF24] transition-colors cursor-pointer"
-                aria-label="Search"
-              >
-                <Search className="w-4 h-4" />
+              <button type="submit" className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/70">
+                <Search className="w-4.5 h-4.5" />
               </button>
             </form>
-
-            {/* Live Suggestions Dropdown */}
-            {searchFocused && liveResults.length > 0 && (
-              <div className="absolute top-full right-0 mt-2.5 w-80 bg-[#17345F]/98 backdrop-blur-xl border border-white/15 rounded-2xl shadow-2xl p-2 z-50 text-left animate-in fade-in zoom-in-95 duration-150">
-                <div className="text-[10px] font-semibold text-white/50 uppercase tracking-wider px-3 py-1">
-                  Quick Matches
-                </div>
-                <div className="space-y-1">
-                  {liveResults.map((item) => (
-                    <Link
-                      key={item.id}
-                      href={item.href}
-                      onClick={() => {
-                        setSearchFocused(false);
-                        setSearchQuery("");
-                      }}
-                      className="block px-3 py-2 rounded-xl hover:bg-white/10 transition-colors"
-                    >
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-white truncate mr-2">
-                          {item.title}
-                        </span>
-                        <span className="text-[10px] text-[#FBBF24] bg-white/10 px-1.5 py-0.5 rounded-full shrink-0">
-                          {item.category}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-white/70 line-clamp-1 mt-0.5">
-                        {item.description}
-                      </p>
-                    </Link>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onMouseDown={() => {
-                    router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-                    setSearchFocused(false);
-                  }}
-                  className="w-full mt-1 pt-2 border-t border-white/10 text-center text-xs text-[#FBBF24] hover:text-white font-medium flex items-center justify-center gap-1 py-1 cursor-pointer"
-                >
-                  <span>See all results for &ldquo;{searchQuery}&rdquo;</span>
-                  <ArrowRight className="w-3 h-3" />
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Mobile Toggle */}
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center p-2 rounded-lg text-white hover:bg-white/10 active:bg-white/20"
-            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
-      </div>
-    </div>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden bg-[#17345F]/98 backdrop-blur-xl border-b border-white/10 px-5 sm:px-6 pt-4 pb-6 mt-2 sm:mt-3 space-y-4 max-h-[calc(100vh-80px)] overflow-y-auto overscroll-contain shadow-2xl">
-          <form onSubmit={handleSearch} className="relative">
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search..."
-              className="w-full h-11 pl-4 pr-11 rounded-full bg-white/10 border border-white/25 text-white text-sm placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-[#FBBF24]/60"
-            />
-            <button type="submit" className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/70">
-              <Search className="w-4.5 h-4.5" />
-            </button>
-          </form>
+          )}
 
           <nav className="flex flex-col space-y-1">
-            {[
-              { label: getLabel("/", "Home"), href: "/" },
-              { label: getLabel("/about", "About Us"), href: "/about" },
-              { label: getLabel("/learning", "Learning"), href: "/learning" },
-              { label: getLabel("/campus", "Campus"), href: "/campus" },
-              { label: getLabel("/about/sports-and-arts", "Sports & Arts"), href: "/about/sports-and-arts" },
-              { label: getLabel("/gallery", "Gallery"), href: "/gallery" },
-              { label: getLabel("/admission", "Admissions"), href: "/admission" },
-              { label: getLabel("/events", "Events"), href: "/events" },
-              { label: getLabel("/news", "News & Updates"), href: "/news" },
-              { label: getLabel("/news/publications", "Publications"), href: "/news/publications" },
-              { label: getLabel("/clubs-and-activities", "Clubs & Activities"), href: "/clubs-and-activities" },
-              { label: getLabel("/contact", "Contact"), href: "/contact" },
-              ...extraNavLinks.map((item) => ({ label: item.label, href: item.href })),
-            ].map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
-                className={cn(
-                  "text-base font-medium py-2.5 border-b border-white/5 flex items-center justify-between",
-                  isActive(item.href)
-                    ? "text-[#FBBF24] font-semibold"
-                    : "text-white/90 hover:text-white"
-                )}
-              >
-                <span>{item.label}</span>
-                {isActive(item.href) && <span className="w-2 h-2 rounded-full bg-[#FBBF24]" />}
-              </Link>
-            ))}
+            {menuItems.map((item) => {
+              const hasChildren = Boolean(item.children && item.children.length > 0);
+              const active = isItemActive(item);
+              const isExpanded = Boolean(mobileExpandedIds[item.id || item.label]);
+              const itemHref = normalizeMenuUrl(item.url);
+
+              if (hasChildren) {
+                return (
+                  <div key={item.id || item.label} className="border-b border-white/5 py-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleMobileSubmenu(item.id || item.label)}
+                      className="w-full text-base font-medium py-2.5 flex items-center justify-between text-white/90 hover:text-white"
+                    >
+                      <span className={active ? "text-[#FBBF24] font-semibold" : ""}>
+                        {formatLabel(item.label)}
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "w-4 h-4 transition-transform duration-200 text-white/70",
+                          isExpanded && "rotate-180"
+                        )}
+                      />
+                    </button>
+                    {isExpanded && (
+                      <div className="pl-4 pb-2 space-y-1">
+                        {item.children?.map((child) => {
+                          const childHref = normalizeMenuUrl(child.url);
+                          const isChildActive =
+                            pathname === childHref ||
+                            (childHref !== "/" && pathname.startsWith(`${childHref}/`));
+
+                          return (
+                            <Link
+                              key={child.id || child.label}
+                              href={childHref}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className={cn(
+                                "block py-2 text-sm font-medium transition-colors",
+                                isChildActive
+                                  ? "text-[#FBBF24] font-semibold"
+                                  : "text-white/80 hover:text-white"
+                              )}
+                            >
+                              {formatLabel(child.label)}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={item.id || item.label}
+                  href={itemHref}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    "text-base font-medium py-2.5 border-b border-white/5 flex items-center justify-between",
+                    active ? "text-[#FBBF24] font-semibold" : "text-white/90 hover:text-white"
+                  )}
+                >
+                  <span>{formatLabel(item.label)}</span>
+                  {active && <span className="w-2 h-2 rounded-full bg-[#FBBF24]" />}
+                </Link>
+              );
+            })}
           </nav>
         </div>
       )}

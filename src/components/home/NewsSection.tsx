@@ -12,8 +12,8 @@ import { formatAndSortNewsArticles, formatDisplayDate } from "@/lib/newsHelper";
 import { NewsItem } from "@/types";
 
 const HOME_NEWS_TABS = [
-  { id: "events", number: "01.", label: "Events" },
-  { id: "news", number: "02.", label: "News & Updates" },
+  { id: "news", number: "01.", label: "News & Updates" },
+  { id: "events", number: "02.", label: "Events" },
 ] as const;
 
 function CustomScrollbar({ scrollContainerRef }: { scrollContainerRef: React.RefObject<HTMLDivElement | null> }) {
@@ -162,8 +162,9 @@ export function NewsSection({
   eventsPageData,
   articlesData,
 }: NewsSectionProps) {
-  const [activeTab, setActiveTab] = useState<"events" | "news">("events");
+  const [activeTab, setActiveTab] = useState<"news" | "events">("news");
   const newsScrollRef = useRef<HTMLDivElement>(null);
+  const isHoveredRef = useRef(false);
 
   const headerLabel = headerData?.label || "LATEST ANNOUNCEMENTS";
   const headerHeading = headerData?.heading || "What's new at Kids' Foundation";
@@ -241,6 +242,40 @@ export function NewsSection({
     return [];
   }, [newsPageData, articlesData, currentTimestamp]);
 
+  // Auto-scroll vertically for news list with smooth progression and pause on hover
+  useEffect(() => {
+    if (activeTab !== "news") return;
+    const el = newsScrollRef.current;
+    if (!el) return;
+
+    let animationFrameId: number;
+    let accumulated = 0;
+
+    const step = () => {
+      if (!isHoveredRef.current && el) {
+        accumulated += 0.5; // gentle, readable auto-scroll speed
+        if (accumulated >= 1) {
+          const pixels = Math.floor(accumulated);
+          accumulated -= pixels;
+
+          // When reached the end, smoothly loop back to top
+          if (el.scrollTop + el.clientHeight >= el.scrollHeight - 2) {
+            el.scrollTop = 0;
+          } else {
+            el.scrollTop += pixels;
+          }
+        }
+      }
+      animationFrameId = requestAnimationFrame(step);
+    };
+
+    animationFrameId = requestAnimationFrame(step);
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [activeTab, latest10News]);
+
   return (
     <section id="news" className="py-12 sm:py-16 lg:py-20 bg-[#FAF7F2] relative overflow-hidden">
       <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px]">
@@ -253,7 +288,7 @@ export function NewsSection({
           className="mb-6 sm:mb-8"
         />
 
-        {/* Tabs: 01. Events | 02. News & Updates */}
+        {/* Tabs: 01. News & Updates | 02. Events */}
         <div className="flex justify-center mb-8 sm:mb-10">
           <div
             role="tablist"
@@ -267,7 +302,7 @@ export function NewsSection({
                   key={tab.id}
                   role="tab"
                   aria-selected={isActive}
-                  onClick={() => setActiveTab(tab.id as "events" | "news")}
+                  onClick={() => setActiveTab(tab.id as "news" | "events")}
                   className={cn(
                     "relative py-1 px-2.5 text-xs sm:text-[13px] font-semibold transition-all cursor-pointer select-none flex items-center gap-1.5",
                     isActive
@@ -287,17 +322,25 @@ export function NewsSection({
           </div>
         </div>
 
-        {/* Content: Cards for Events, List for News & Updates */}
-        {activeTab === "events" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-            {eventItems.map((item) => (
-              <NewsCard key={item.id} item={item} />
-            ))}
-          </div>
-        ) : (
+        {/* Content: List for News & Updates, Cards for Events */}
+        {activeTab === "news" ? (
           <div className="relative max-w-[950px] mx-auto">
             {/* Outer container with flat blue background and clipping */}
-            <div className="bg-[#E8EEF6] rounded-3xl p-3 sm:p-5 overflow-hidden relative">
+            <div
+              className="bg-[#E8EEF6] rounded-3xl p-3 sm:p-5 overflow-hidden relative"
+              onMouseEnter={() => {
+                isHoveredRef.current = true;
+              }}
+              onMouseLeave={() => {
+                isHoveredRef.current = false;
+              }}
+              onTouchStart={() => {
+                isHoveredRef.current = true;
+              }}
+              onTouchEnd={() => {
+                isHoveredRef.current = false;
+              }}
+            >
               {/* Custom scrollbar */}
               <CustomScrollbar scrollContainerRef={newsScrollRef} />
 
@@ -310,7 +353,7 @@ export function NewsSection({
                   <Link
                     key={item.id}
                     href={item.linkHref}
-                    className="group flex flex-col sm:flex-row sm:items-center rounded-2xl px-4 sm:px-7 py-3 sm:py-5 shadow-[0_2px_12px_rgba(23,52,95,0.04)] hover:shadow-[0_6px_20px_rgba(23,52,95,0.08)] transition-all duration-300 hover:-translate-y-0.5 flex-shrink-0 bg-white gap-2 sm:gap-0"
+                    className="group flex flex-col sm:flex-row sm:items-center rounded-2xl px-4 sm:px-7 py-3.5 sm:py-4.5 shadow-[0_2px_12px_rgba(23,52,95,0.04)] hover:shadow-[0_6px_20px_rgba(23,52,95,0.08)] transition-all duration-300 hover:-translate-y-0.5 flex-shrink-0 bg-white gap-2 sm:gap-0 min-w-0"
                   >
                     {/* Date + Optional Latest badge */}
                     <div className="flex items-center gap-2.5 flex-wrap sm:min-w-[170px] shrink-0">
@@ -324,8 +367,11 @@ export function NewsSection({
                       )}
                     </div>
 
-                    {/* Title */}
-                    <h3 className="flex-1 text-sm sm:text-base font-bold text-[#17345F] leading-snug group-hover:text-[#F47C61] transition-colors pl-0 sm:pl-4">
+                    {/* Title - strictly one line only (no two lines) */}
+                    <h3
+                      title={item.title}
+                      className="flex-1 min-w-0 text-sm sm:text-base font-bold text-[#17345F] leading-normal group-hover:text-[#F47C61] transition-colors pl-0 sm:pl-4 truncate"
+                    >
                       {item.title}
                     </h3>
 
@@ -340,18 +386,24 @@ export function NewsSection({
               </div>
             </div>
           </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+            {eventItems.map((item) => (
+              <NewsCard key={item.id} item={item} />
+            ))}
+          </div>
         )}
 
         {/* Bottom Link */}
         <div className="mt-8 sm:mt-10 text-center">
           <Link
-            href={activeTab === "events" ? "/events" : "/news"}
+            href={activeTab === "news" ? "/news" : "/events"}
             className="inline-flex items-center text-[#F47C61] hover:text-[#E0684E] font-semibold text-sm transition-colors group"
           >
             <span>
-              {activeTab === "events"
-                ? "View all events →"
-                : "View all news & notices →"}
+              {activeTab === "news"
+                ? "View all news & notices →"
+                : "View all events →"}
             </span>
           </Link>
         </div>

@@ -9,6 +9,13 @@ interface PageBannerProps {
 }
 
 export function PageBanner({ title, breadcrumb, image }: PageBannerProps) {
+  // Normalize breadcrumb so "Home" is never duplicated
+  const rawCrumbs = breadcrumb || [];
+  const crumbs =
+    rawCrumbs.length > 0 && rawCrumbs[0]?.trim().toLowerCase() === "home"
+      ? rawCrumbs.slice(1)
+      : rawCrumbs;
+
   return (
     <section className="relative pt-32 sm:pt-36 lg:pt-40 pb-12 sm:pb-16 bg-[#17345F] overflow-hidden">
       {/* Background Image / Overlay */}
@@ -31,19 +38,31 @@ export function PageBanner({ title, breadcrumb, image }: PageBannerProps) {
 
       <div className="relative z-10 max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px]">
         {/* Breadcrumb */}
-        {breadcrumb && breadcrumb.length > 0 && (
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <Link href="/" className="text-white/60 hover:text-white text-xs font-medium transition-colors">
-              Home
-            </Link>
-            {breadcrumb.map((crumb, i) => (
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <Link
+            href="/"
+            className="text-white/60 hover:text-white text-xs font-medium transition-colors"
+          >
+            Home
+          </Link>
+          {crumbs.map((crumb, i) => {
+            const isLast = i === crumbs.length - 1;
+            return (
               <React.Fragment key={i}>
                 <span className="text-white/40 text-xs">›</span>
-                <span className="text-[#FBBF24] text-xs font-medium">{crumb}</span>
+                <span
+                  className={
+                    isLast
+                      ? "text-[#FBBF24] text-xs font-medium"
+                      : "text-white/70 text-xs font-medium"
+                  }
+                >
+                  {crumb}
+                </span>
               </React.Fragment>
-            ))}
-          </div>
-        )}
+            );
+          })}
+        </div>
 
         {/* Page Title */}
         <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[44px] font-extrabold text-white tracking-tight leading-[1.18] sm:leading-[1.15]">

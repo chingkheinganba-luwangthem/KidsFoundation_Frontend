@@ -84,17 +84,33 @@ export default async function AdmissionPage() {
                     </div>
                   </div>
 
-                  {enquiry.downloadHref && enquiry.downloadHref !== "#" && (
-                    <div className="pt-2">
-                      <a
-                        href={enquiry.downloadHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 bg-[#F47C61] hover:bg-[#E0684E] text-white text-sm font-semibold px-6 py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-200 active:scale-98"
-                      >
-                        <Download className="w-4 h-4" />
-                        {enquiry.downloadLabel || "Download Admission Form"}
-                      </a>
+                  {((enquiry.downloadButtons && enquiry.downloadButtons.length > 0) ||
+                    (enquiry.downloadHref && enquiry.downloadHref !== "#")) && (
+                    <div className="pt-2 flex flex-wrap items-center gap-3">
+                      {enquiry.downloadButtons && enquiry.downloadButtons.length > 0 ? (
+                        enquiry.downloadButtons.map((btn, idx) => (
+                          <a
+                            key={btn.id || `${btn.href}-${idx}`}
+                            href={btn.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 bg-[#F47C61] hover:bg-[#E0684E] text-white text-xs sm:text-sm font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-200 active:scale-98"
+                          >
+                            <Download className="w-4 h-4 shrink-0" />
+                            <span>{btn.label}</span>
+                          </a>
+                        ))
+                      ) : (
+                        <a
+                          href={enquiry.downloadHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 bg-[#F47C61] hover:bg-[#E0684E] text-white text-xs sm:text-sm font-semibold px-5 sm:px-6 py-2.5 sm:py-3 rounded-full shadow-sm hover:shadow-md transition-all duration-200 active:scale-98"
+                        >
+                          <Download className="w-4 h-4 shrink-0" />
+                          <span>{enquiry.downloadLabel || "Download Admission Form"}</span>
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>

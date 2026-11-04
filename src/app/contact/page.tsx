@@ -39,6 +39,7 @@ export default async function ContactPage() {
       getInTouchHeading={strapiData?.getInTouchHeading}
       getInTouchDescription={strapiData?.getInTouchDescription}
       contactItems={contactItems}
+      formEyebrow={strapiData?.formEyebrow}
       formHeading={strapiData?.formHeading}
       formDescription={strapiData?.formDescription}
       formSubmitLabel={strapiData?.formSubmitLabel}

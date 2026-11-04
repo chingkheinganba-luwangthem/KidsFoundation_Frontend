@@ -40,14 +40,14 @@ export default async function Home() {
       {/* 2. Hero Section */}
       <HeroSection data={homeData?.hero} />
 
-      {/* 2.5 Milestone Ribbon: 20+ Years of Academic Excellence */}
-      <ExcellenceBanner data={homeData?.excellenceBanner} />
-
       {/* 3. About Kids' Foundation - dynamic from about-page */}
       <AboutSection
         data={homeData?.about}
         aboutPageData={aboutPageData}
       />
+
+      {/* 3.5 20+ Years of Academic Excellence Ribbon */}
+      <ExcellenceBanner data={homeData?.excellenceBanner} />
 
       {/* 4. Academic Stages - dynamic from learning-page */}
       <AcademicStages

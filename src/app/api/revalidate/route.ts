@@ -48,13 +48,27 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Default: revalidate learning and homepage
-    revalidatePath("/learning");
-    revalidatePath("/");
+    // Default: revalidate all known routes and root
+    const routes = [
+      "/",
+      "/about",
+      "/learning",
+      "/admission",
+      "/campus",
+      "/clubs-and-activities",
+      "/about/sports-and-arts",
+      "/events",
+      "/news",
+      "/news/publications",
+      "/gallery",
+      "/contact",
+      "/mandatory-public-disclosure",
+    ];
+    routes.forEach((r) => revalidatePath(r));
 
     return NextResponse.json({
       revalidated: true,
-      path: "all",
+      routes,
       timestamp: Date.now(),
     });
   } catch (error: any) {

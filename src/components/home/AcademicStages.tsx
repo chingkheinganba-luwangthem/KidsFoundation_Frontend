@@ -19,8 +19,8 @@ export function AcademicStages({
   learningPageData,
   stagesData,
 }: AcademicStagesProps) {
-  const headerLabel = headerData?.label || "ACADEMIC PATHWAY";
-  const headerHeading = headerData?.heading || "A journey that grows with them.";
+  const headerLabel = headerData?.label || learningPageData?.introLabel || "";
+  const headerHeading = headerData?.heading || learningPageData?.introHeading || "";
   const headerDescription = headerData?.description || "";
 
   const stages = useMemo(() => {
@@ -35,15 +35,19 @@ export function AcademicStages({
           ? s.bottomText.replace(/[→\->]/g, "").trim()
           : "Explore Stage";
 
+        // Excerpt activities/tags to up to 4 key highlights
+        const rawActivities = s.activities || [];
+        const excerptedTags = rawActivities.slice(0, 4);
+
         return {
           id: stageKey,
           tabNumber: `0${idx + 1}.`,
           tabLabel: s.title || `Stage ${idx + 1}`,
-          subLabel: s.subLabel || s.title || "",
-          heading: s.boldIntro || s.title || `Stage ${idx + 1}`,
+          subLabel: s.eyebrow || s.subLabel || "",
+          heading: s.title || s.boldIntro || `Stage ${idx + 1}`,
           description:
             (Array.isArray(s.description) ? s.description[0] : s.description) || "",
-          tags: s.activities || [],
+          tags: excerptedTags,
           linkText: cleanLinkText,
           linkHref: `/learning#${stageKey}`,
           image: stageImage,

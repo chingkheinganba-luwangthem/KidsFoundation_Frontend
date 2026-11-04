@@ -26,6 +26,7 @@ interface ContactClientProps {
   getInTouchHeading?: string;
   getInTouchDescription?: string;
   contactItems: ContactItem[];
+  formEyebrow?: string;
   formHeading?: string;
   formDescription?: string;
   formSubmitLabel?: string;
@@ -46,21 +47,22 @@ const DEFAULT_FORM_FIELDS = [
 
 export function ContactClient({
   bannerTitle = "Contact Us",
-  breadcrumb = ["Contact"],
-  bannerImage = "/images/pages_hero_background_image/contact_hero.jpg",
-  getInTouchLabel = "GET IN TOUCH",
-  getInTouchHeading = "We'd love to hear from you",
-  getInTouchDescription = "Whether you have questions about admissions, our curriculum, campus tours, or general queries, our friendly administrative team is here to assist you.",
-  contactItems,
+  breadcrumb = ["Home", "Contact"],
+  bannerImage,
+  getInTouchLabel,
+  getInTouchHeading,
+  getInTouchDescription,
+  contactItems = [],
+  formEyebrow,
   formHeading = "Send Us a Message",
-  formDescription = "Have questions about admissions, campus tours, or anything else? We'd love to hear from you.",
+  formDescription,
   formSubmitLabel = "Send Message",
-  mapLabel = "FIND US",
-  mapHeading = "Visit Our Campus",
-  mapAddress = "Airport Road, NH 150, Ghari, Imphal, Manipur 795001",
-  mapEmbedUrl = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d7244.770281699026!2d93.9014291!3d24.7776411!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3749261ea6480eaf%3A0xba24397b1a9bc2f6!2sKids%E2%80%99%20Foundation%20School%20%7C%20Manipur!5e0!3m2!1sen!2sin!4v1730000000000!5m2!1sen!2sin",
-  mapDirectUrl = "https://www.google.com/maps/place/Kids%E2%80%99+Foundation+School+%7C+Manipur/@24.7764361,93.9105756,16z/data=!4m6!3m5!1s0x3749261ea6480eaf:0xba24397b1a9bc2f6!8m2!3d24.7764361!4d93.9105756!16s%2Fg%2F1hc2jgz_7",
-  mapTitle = "Kids’ Foundation School | Manipur Location",
+  mapLabel,
+  mapHeading,
+  mapAddress,
+  mapEmbedUrl,
+  mapDirectUrl,
+  mapTitle,
 }: ContactClientProps) {
   const [formState, setFormState] = useState({
     name: "",
@@ -138,50 +140,60 @@ export function ContactClient({
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-16 items-start">
               {/* Contact Info */}
               <div className="lg:col-span-5">
-                <span className="text-[#D97706] font-semibold text-xs sm:text-[13px] tracking-[0.25em] uppercase mb-2.5 sm:mb-3 inline-block leading-normal">
-                  {getInTouchLabel}
-                </span>
-                <h2 className="text-2xl sm:text-3xl lg:text-[36px] font-bold text-[#17345F] leading-[1.22] tracking-tight mb-4 sm:mb-6">
-                  {getInTouchHeading}
-                </h2>
-                <p className="text-sm sm:text-base text-[#475569] leading-[1.8] sm:leading-[1.85] mb-8">
-                  {getInTouchDescription}
-                </p>
+                {getInTouchLabel && (
+                  <span className="text-[#D97706] font-semibold text-xs sm:text-[13px] tracking-[0.25em] uppercase mb-2.5 sm:mb-3 inline-block leading-normal">
+                    {getInTouchLabel}
+                  </span>
+                )}
+                {getInTouchHeading && (
+                  <h2 className="text-2xl sm:text-3xl lg:text-[36px] font-bold text-[#17345F] leading-[1.22] tracking-tight mb-4 sm:mb-6">
+                    {getInTouchHeading}
+                  </h2>
+                )}
+                {getInTouchDescription && (
+                  <p className="text-sm sm:text-base text-[#475569] leading-[1.8] sm:leading-[1.85] mb-8">
+                    {getInTouchDescription}
+                  </p>
+                )}
 
-                <div className="space-y-6">
-                  {contactItems.map((item) => {
-                    const Icon = iconMap[item.icon as keyof typeof iconMap] || MapPin;
-                    return (
-                      <div key={item.label} className="flex items-start gap-4">
-                        <div className="w-11 h-11 rounded-xl bg-[#E7EEF8] flex items-center justify-center shrink-0 mt-0.5">
-                          <Icon className="w-5 h-5 text-[#17345F]" />
+                {contactItems && contactItems.length > 0 && (
+                  <div className="space-y-6">
+                    {contactItems.map((item) => {
+                      const Icon = iconMap[item.icon as keyof typeof iconMap] || MapPin;
+                      return (
+                        <div key={`${item.label}-${item.value}`} className="flex items-start gap-4">
+                          <div className="w-11 h-11 rounded-xl bg-[#E7EEF8] flex items-center justify-center shrink-0 mt-0.5">
+                            <Icon className="w-5 h-5 text-[#17345F]" />
+                          </div>
+                          <div>
+                            <p className="text-xs sm:text-[13px] font-bold text-[#17345F] uppercase tracking-wider mb-1">
+                              {item.label}
+                            </p>
+                            <p className="text-sm sm:text-base text-[#475569] leading-[1.7]">
+                              {item.value}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-xs sm:text-[13px] font-bold text-[#17345F] uppercase tracking-wider mb-1">
-                            {item.label}
-                          </p>
-                          <p className="text-sm sm:text-base text-[#475569] leading-[1.7]">
-                            {item.value}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Contact Form */}
               <div className="lg:col-span-7">
                 <div className="bg-[#FAF7F2] rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-10 border border-[#EBE3D5] shadow-[0_8px_30px_rgba(23,52,95,0.04)]">
                   <span className="text-[#D97706] font-semibold text-xs sm:text-[13px] tracking-[0.25em] uppercase mb-2 inline-block leading-normal">
-                    SEND A MESSAGE
+                    {formEyebrow || "SEND A MESSAGE"}
                   </span>
                   <h3 className="text-xl sm:text-2xl lg:text-[28px] font-bold text-[#17345F] leading-[1.25] mb-2 tracking-tight">
                     {formHeading}
                   </h3>
-                  <p className="text-sm sm:text-base text-[#475569] leading-[1.8] sm:leading-[1.85] mb-6 sm:mb-8">
-                    {formDescription}
-                  </p>
+                  {formDescription && (
+                    <p className="text-sm sm:text-base text-[#475569] leading-[1.8] sm:leading-[1.85] mb-6 sm:mb-8">
+                      {formDescription}
+                    </p>
+                  )}
 
                   {submitted ? (
                     <div className="text-center py-8">
@@ -313,47 +325,59 @@ export function ContactClient({
         </section>
 
         {/* Map Section */}
-        <section className="py-12 sm:py-16 lg:py-20 bg-[#FAF7F2]">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px]">
-            <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between gap-4 mb-8 sm:mb-10 text-center sm:text-left">
-              <div>
-                <span className="text-[#D97706] font-semibold text-xs sm:text-[13px] tracking-[0.25em] uppercase mb-2.5 sm:mb-3 inline-block leading-normal">
-                  {mapLabel}
-                </span>
-                <h2 className="text-2xl sm:text-3xl lg:text-[36px] font-bold text-[#17345F] leading-[1.22] tracking-tight">
-                  {mapHeading}
-                </h2>
-                <p className="text-sm text-[#64748B] mt-1.5">
-                  {mapAddress}
-                </p>
+        {(mapEmbedUrl || mapHeading || mapAddress) && (
+          <section className="py-12 sm:py-16 lg:py-20 bg-[#FAF7F2]">
+            <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 lg:px-[100px]">
+              <div className="flex flex-col sm:flex-row items-center sm:items-end justify-between gap-4 mb-8 sm:mb-10 text-center sm:text-left">
+                <div>
+                  {mapLabel && (
+                    <span className="text-[#D97706] font-semibold text-xs sm:text-[13px] tracking-[0.25em] uppercase mb-2.5 sm:mb-3 inline-block leading-normal">
+                      {mapLabel}
+                    </span>
+                  )}
+                  {mapHeading && (
+                    <h2 className="text-2xl sm:text-3xl lg:text-[36px] font-bold text-[#17345F] leading-[1.22] tracking-tight">
+                      {mapHeading}
+                    </h2>
+                  )}
+                  {mapAddress && (
+                    <p className="text-sm text-[#64748B] mt-1.5">
+                      {mapAddress}
+                    </p>
+                  )}
+                </div>
+
+                {mapDirectUrl && (
+                  <a
+                    href={mapDirectUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-white hover:bg-[#17345F] text-[#17345F] hover:text-white px-5 py-2.5 rounded-full border border-slate-300 text-xs sm:text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200 group shrink-0"
+                  >
+                    <MapPin className="w-4 h-4 text-[#F47C61] group-hover:text-white transition-colors" />
+                    <span>Open in Google Maps</span>
+                  </a>
+                )}
               </div>
 
-              <a
-                href={mapDirectUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-white hover:bg-[#17345F] text-[#17345F] hover:text-white px-5 py-2.5 rounded-full border border-slate-300 text-xs sm:text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200 group shrink-0"
-              >
-                <MapPin className="w-4 h-4 text-[#F47C61] group-hover:text-white transition-colors" />
-                <span>Open in Google Maps</span>
-              </a>
+              {mapEmbedUrl && (
+                <div className="w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[16/7] rounded-2xl overflow-hidden shadow-[0_8px_24px_rgba(23,52,95,0.08)] border border-slate-200 bg-[#E7EEF8]">
+                  <iframe
+                    src={mapEmbedUrl}
+                    title={mapTitle || mapHeading || "Kids' Foundation School Campus Location"}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    className="w-full h-full"
+                  />
+                </div>
+              )}
             </div>
-
-            <div className="w-full aspect-[4/3] sm:aspect-[16/9] lg:aspect-[16/7] rounded-2xl overflow-hidden shadow-[0_8px_24px_rgba(23,52,95,0.08)] border border-slate-200 bg-[#E7EEF8]">
-              <iframe
-                src={mapEmbedUrl}
-                title={mapTitle}
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                className="w-full h-full"
-              />
-            </div>
-          </div>
-        </section>
+          </section>
+        )}
       </main>
     </div>
   );

@@ -12,7 +12,7 @@ import {
   ShieldCheck,
   Award,
 } from "lucide-react";
-import { DisclosureDocument } from "@/data/disclosurePage";
+import { DisclosureDocument } from "@/types/strapi";
 
 interface DocumentPreviewModalProps {
   document: DisclosureDocument | null;
@@ -225,10 +225,10 @@ export function DocumentPreviewModal({
                 </div>
                 <div className="w-28 h-px bg-slate-300 mx-auto my-1" />
                 <span className="text-[11px] font-bold text-[#17345F] block">
-                  Ch. Sunitibala Devi
+                  Principal
                 </span>
                 <span className="text-[10px] text-slate-500 block">
-                  Principal, Kids&apos; Foundation
+                  Kids&apos; Foundation
                 </span>
               </div>
 

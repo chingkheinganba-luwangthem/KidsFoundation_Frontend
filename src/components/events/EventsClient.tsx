@@ -5,6 +5,7 @@ import Image from "next/image";
 import { PageBanner } from "@/components/ui/PageBanner";
 import { Clock, MapPin, Tag, ArrowRight } from "lucide-react";
 import { EventReaderModal } from "@/components/events/EventReaderModal";
+import { EventImageCarousel } from "@/components/events/EventImageCarousel";
 import type { EventItem } from "@/types/strapi";
 
 export type { EventItem };
@@ -26,39 +27,48 @@ function EventCard({
   event: EventItem;
   onReadEvent: (event: EventItem) => void;
 }) {
+  const images =
+    event.images && event.images.length > 0
+      ? event.images
+      : event.image
+      ? [event.image]
+      : [];
+
   return (
     <div className="group bg-white rounded-2xl overflow-hidden shadow-[0_4px_16px_rgba(23,52,95,0.06)] border border-slate-100 hover:shadow-[0_12px_32px_rgba(23,52,95,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col">
       <div
         onClick={() => onReadEvent(event)}
-        className="relative h-[220px] overflow-hidden flex-shrink-0 cursor-pointer"
+        className="relative h-[220px] overflow-hidden flex-shrink-0 cursor-pointer bg-slate-100"
       >
-        <Image
-          src={event.image}
-          alt={event.imageAlt}
-          fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          style={{ objectFit: "cover", objectPosition: "center" }}
-          className="group-hover:scale-105 transition-transform duration-500"
-        />
-        <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm rounded-xl px-3 py-2 text-center shadow-sm min-w-[52px]">
-          <div className="text-[#F47C61] text-[10px] font-bold uppercase tracking-wider leading-none mb-0.5">
-            {event.month}
+        <EventImageCarousel
+          images={images}
+          alt={event.imageAlt || event.title}
+          interval={3800}
+        >
+          {/* Calendar Stamp */}
+          {event.month && event.day && (
+            <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-sm rounded-xl px-3 py-2 text-center shadow-sm min-w-[52px]">
+              <div className="text-[#F47C61] text-[10px] font-bold uppercase tracking-wider leading-none mb-0.5">
+                {event.month}
+              </div>
+              <div className="text-[#17345F] text-xl font-extrabold leading-none">
+                {event.day}
+              </div>
+            </div>
+          )}
+          {/* Tag */}
+          <div className="absolute top-4 right-4 z-10">
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full ${
+                event.tag === "upcoming"
+                  ? "bg-[#F47C61] text-white"
+                  : "bg-slate-700/80 text-white"
+              }`}
+            >
+              {event.tag === "upcoming" ? "Upcoming" : "Past"}
+            </span>
           </div>
-          <div className="text-[#17345F] text-xl font-extrabold leading-none">
-            {event.day}
-          </div>
-        </div>
-        <div className="absolute top-4 right-4">
-          <span
-            className={`text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full ${
-              event.tag === "upcoming"
-                ? "bg-[#F47C61] text-white"
-                : "bg-slate-700/80 text-white"
-            }`}
-          >
-            {event.tag === "upcoming" ? "Upcoming" : "Past"}
-          </span>
-        </div>
+        </EventImageCarousel>
       </div>
 
       <div className="p-5 sm:p-6 flex flex-col flex-1">

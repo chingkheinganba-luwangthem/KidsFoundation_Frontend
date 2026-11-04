@@ -27,13 +27,7 @@ export default async function ClubsAndActivitiesPage() {
         strapiData?.breadcrumb || ["Home", "Clubs & Activities"]
       }
       bannerImage={strapiData?.bannerImage || undefined}
-      overviewHeading={strapiData?.overviewHeading}
-      overviewDescription={strapiData?.overviewDescription}
-      categories={
-        strapiData?.categories && strapiData.categories.length > 0
-          ? strapiData.categories
-          : undefined
-      }
+      description={strapiData?.clubs_description || strapiData?.description}
       clubs={clubs}
     />
   );

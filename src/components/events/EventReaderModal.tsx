@@ -11,6 +11,7 @@ import {
   Share2,
   ArrowLeft,
 } from "lucide-react";
+import { EventImageCarousel } from "@/components/events/EventImageCarousel";
 
 export interface EventModalItem {
   id: string | number;
@@ -22,6 +23,7 @@ export interface EventModalItem {
   description: string;
   category: string;
   image: string;
+  images?: string[];
   imageAlt: string;
   time?: string;
   venue?: string;
@@ -71,24 +73,19 @@ export function EventReaderModal({ event, onClose }: EventReaderModalProps) {
     }
   };
 
-  const fullParagraphs =
+  const hasSchedule = Boolean(event.date || event.time || event.venue);
+  const cleanDescription = (event.description || "").trim();
+  const descParagraphs = cleanDescription
+    ? cleanDescription.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)
+    : [];
+
+  const displayParagraphs =
     event.paragraphs && event.paragraphs.length > 0
       ? event.paragraphs
-      : [
-          event.description,
-          "Kids' Foundation regularly organizes diverse co-curricular, athletic, and cultural events to provide students with authentic opportunities to develop leadership, teamwork, self-confidence, and public speaking abilities.",
-          "Students, teachers, and parent representatives work collaboratively to ensure every programme is planned with utmost care, fostering safety, discipline, and spirited participation throughout.",
-        ];
+      : descParagraphs;
 
   const highlights =
-    event.highlights && event.highlights.length > 0
-      ? event.highlights
-      : [
-          `Scheduled for ${event.date}${event.time ? ` • ${event.time}` : ""}`,
-          `Venue: ${event.venue || "Kids' Foundation Campus, Imphal"}`,
-          "Students are required to adhere to the designated event guidelines and dress code",
-          "For further participation or registration details, reach out to the event coordinator",
-        ];
+    event.highlights && event.highlights.length > 0 ? event.highlights : [];
 
   return (
     <div
@@ -114,9 +111,11 @@ export function EventReaderModal({ event, onClose }: EventReaderModalProps) {
             >
               {event.tag === "upcoming" ? "Upcoming Event" : "Past Event"}
             </span>
-            <span className="text-xs text-[#FBBF24] font-medium hidden sm:inline truncate">
-              {event.category}
-            </span>
+            {event.category && (
+              <span className="text-xs text-[#FBBF24] font-medium hidden sm:inline truncate">
+                {event.category}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -141,35 +140,47 @@ export function EventReaderModal({ event, onClose }: EventReaderModalProps) {
 
         {/* Modal Scrollable Body */}
         <div className="overflow-y-auto p-5 sm:p-8 space-y-6">
-          {/* Event Image */}
-          <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden shadow-md bg-slate-100">
-            <Image
-              src={event.image}
-              alt={event.imageAlt || event.title}
-              fill
-              sizes="(max-width: 768px) 100vw, 800px"
-              className="object-cover object-center"
-              priority
-            />
-            {/* Calendar Stamp */}
-            <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm rounded-xl px-3.5 py-2 text-center shadow-md min-w-[56px]">
-              <div className="text-[#F47C61] text-[11px] font-bold uppercase tracking-wider leading-none mb-0.5">
-                {event.month}
-              </div>
-              <div className="text-[#17345F] text-2xl font-extrabold leading-none">
-                {event.day}
-              </div>
+          {/* Event Image / Carousel */}
+          {(event.images?.length || event.image) && (
+            <div className="relative w-full aspect-[16/9] rounded-2xl overflow-hidden shadow-md bg-slate-100">
+              <EventImageCarousel
+                images={
+                  event.images && event.images.length > 0
+                    ? event.images
+                    : event.image
+                    ? [event.image]
+                    : []
+                }
+                alt={event.imageAlt || event.title}
+                priority
+                showArrows
+                interval={4000}
+              >
+                {/* Calendar Stamp */}
+                {event.month && event.day && (
+                  <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-sm rounded-xl px-3.5 py-2 text-center shadow-md min-w-[56px]">
+                    <div className="text-[#F47C61] text-[11px] font-bold uppercase tracking-wider leading-none mb-0.5">
+                      {event.month}
+                    </div>
+                    <div className="text-[#17345F] text-2xl font-extrabold leading-none">
+                      {event.day}
+                    </div>
+                  </div>
+                )}
+              </EventImageCarousel>
             </div>
-          </div>
+          )}
 
-          {/* Title and Key Details Meta Grid */}
+          {/* Title and Key Details Meta */}
           <div>
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#D97706] bg-[#FEF3C7] px-2.5 py-1 rounded-full">
-                <Tag className="w-3 h-3" />
-                {event.category}
-              </span>
-            </div>
+            {event.category && (
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#D97706] bg-[#FEF3C7] px-2.5 py-1 rounded-full">
+                  <Tag className="w-3 h-3" />
+                  {event.category}
+                </span>
+              </div>
+            )}
 
             <h2
               id="event-modal-title"
@@ -181,73 +192,78 @@ export function EventReaderModal({ event, onClose }: EventReaderModalProps) {
           </div>
 
           {/* Quick Schedule / Venue Badge Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-[#F8FAFC] border border-slate-200">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#E8EFF8] text-[#17345F] flex items-center justify-center shrink-0">
-                <Calendar className="w-4 h-4" />
-              </div>
-              <div>
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                  Date
-                </span>
-                <span className="text-xs sm:text-sm font-bold text-[#17345F] block">
-                  {event.date}
-                </span>
-              </div>
+          {hasSchedule && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-[#F8FAFC] border border-slate-200">
+              {event.date && (
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-[#E8EFF8] text-[#17345F] flex items-center justify-center shrink-0">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                      Date
+                    </span>
+                    <span className="text-xs sm:text-sm font-bold text-[#17345F] block">
+                      {event.date}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {event.time && (
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-[#E8EFF8] text-[#17345F] flex items-center justify-center shrink-0">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                      Time
+                    </span>
+                    <span className="text-xs sm:text-sm font-bold text-[#17345F] block">
+                      {event.time}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {event.venue && (
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-[#E8EFF8] text-[#17345F] flex items-center justify-center shrink-0">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                      Venue
+                    </span>
+                    <span className="text-xs sm:text-sm font-bold text-[#17345F] block truncate">
+                      {event.venue}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
+          )}
 
-            {event.time && (
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#E8EFF8] text-[#17345F] flex items-center justify-center shrink-0">
-                  <Clock className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                    Time
-                  </span>
-                  <span className="text-xs sm:text-sm font-bold text-[#17345F] block">
-                    {event.time}
-                  </span>
-                </div>
-              </div>
-            )}
+          {/* Paragraphs from Strapi only */}
+          {displayParagraphs.length > 0 && (
+            <div className="space-y-4 text-sm sm:text-base text-[#475569] leading-[1.8] sm:leading-[1.85]">
+              {displayParagraphs.map((para, i) => (
+                <p key={i} className="whitespace-pre-line">{para}</p>
+              ))}
+            </div>
+          )}
 
-            {event.venue && (
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-[#E8EFF8] text-[#17345F] flex items-center justify-center shrink-0">
-                  <MapPin className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                    Venue
-                  </span>
-                  <span className="text-xs sm:text-sm font-bold text-[#17345F] block truncate">
-                    {event.venue}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Lead Summary */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF7F2] border-l-4 border-[#F47C61] text-sm sm:text-base text-[#17345F] font-semibold leading-relaxed">
-            {event.description}
-          </div>
-
-          {/* Extended Details */}
-          <div className="space-y-4 text-sm sm:text-base text-[#475569] leading-[1.8] sm:leading-[1.85]">
-            {fullParagraphs.map((para, i) => (
-              <p key={i}>{para}</p>
-            ))}
-          </div>
-
-          {/* Highlights as plain paragraphs */}
-          <div className="space-y-1.5">
-            <p className="text-xs font-semibold text-[#17345F] uppercase tracking-wider">Event Highlights &amp; Instructions</p>
-            {highlights.map((h, i) => (
-              <p key={i} className="text-sm text-[#475569] leading-[1.8]">{h}</p>
-            ))}
-          </div>
+          {/* Highlights from Strapi only */}
+          {highlights.length > 0 && (
+            <div className="space-y-1.5 pt-2">
+              <p className="text-xs font-semibold text-[#17345F] uppercase tracking-wider">
+                Event Highlights &amp; Instructions
+              </p>
+              {highlights.map((h, i) => (
+                <p key={i} className="text-sm text-[#475569] leading-[1.8]">{h}</p>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Footer Bar */}

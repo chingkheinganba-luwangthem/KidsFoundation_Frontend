@@ -37,8 +37,9 @@ export interface PhoneEntry {
 
 export interface SocialLink {
   id?: number;
-  platform: "facebook" | "instagram" | "youtube" | "twitter" | "linkedin";
+  platform: "facebook" | "instagram" | "youtube" | "twitter" | "linkedin" | string;
   url: string;
+  icon?: StrapiMedia | null;
 }
 
 export interface LinkButton {
@@ -68,34 +69,109 @@ export interface GlobalSettingData {
   copyright: string;
 }
 
+export interface HeaderMenuItemChild {
+  id?: number;
+  label: string;
+  url: string;
+}
+
+export interface HeaderMenuItem {
+  id?: number;
+  label: string;
+  url: string;
+  children?: HeaderMenuItemChild[];
+}
+
 export interface HeaderData {
   id?: number;
   documentId?: string;
-  schoolName: string;
-  location: string;
+  name?: string;
+  schoolName?: string;
+  location?: string;
+  showSearch?: boolean;
   topNoticeText?: string;
   topNoticeLink?: string;
   logo?: StrapiMedia;
+  menu_item?: HeaderMenuItem[];
   navigation?: LinkButton[];
   moreLinks?: LinkButton[];
   actionButtons?: LinkButton[];
 }
 
+export interface FooterButton {
+  id?: number;
+  text: string;
+  url: string;
+  isExternal?: boolean;
+}
+
+export interface FooterSocialLink {
+  id?: number;
+  url: string;
+  isExternal?: boolean | null;
+  icon?: StrapiMedia | null;
+  platform?: string;
+}
+
+export interface FooterLinkItem {
+  id?: number;
+  name: string;
+  url?: string | null;
+}
+
+export interface FooterLinkColumn {
+  id?: number;
+  heading: string;
+  Name_url?: FooterLinkItem[];
+}
+
+export interface FooterContactDesc {
+  id?: number;
+  heading: string;
+  description: string;
+}
+
+export interface FooterContactUs {
+  id?: number;
+  heading?: string;
+  heading_desc?: FooterContactDesc[];
+}
+
+export interface FooterCardData {
+  id?: number;
+  Logo_Name?: string;
+  description?: string;
+  affiliate?: string;
+  copyright?: string;
+  logo?: StrapiMedia;
+  social_link?: FooterSocialLink[];
+  Links?: FooterLinkColumn[];
+  Contact_us?: FooterContactUs;
+}
+
 export interface FooterData {
   id?: number;
   documentId?: string;
-  tagline: string;
-  cbseAffiliationNo: string;
+  eyebrow?: string;
+  heading?: string;
+  designation?: string;
+  button?: FooterButton[];
+  Footer_card?: FooterCardData;
+  Background_image?: StrapiMedia;
+
+  // Backward compatibility fields
+  tagline?: string;
+  cbseAffiliationNo?: string;
   logo?: StrapiMedia;
   footerBg?: StrapiMedia;
   quickLinks?: LinkButton[];
   importantLinks?: LinkButton[];
-  address: string;
+  address?: string;
   phones?: PhoneEntry[];
   landline?: string;
-  email: string;
+  email?: string;
   socialLinks?: SocialLink[];
-  copyright: string;
+  copyright?: string;
 }
 
 export interface HeroSlide {
@@ -117,13 +193,28 @@ export interface HeroSectionData {
   slides?: HeroSlide[];
 }
 
+export interface TwentyYearsData {
+  id?: number;
+  eyebrow?: string;
+  heading?: string;
+  description?: string;
+  image1?: StrapiMedia | null;
+  image2?: StrapiMedia | null;
+}
+
 export interface ExcellenceBannerData {
   id?: number;
-  yearsEmblem: string;
-  yearsLabel: string;
-  subtitle: string;
-  heading: string;
-  description: string;
+  yearsEmblem?: string;
+  yearsLabel?: string;
+  subtitle?: string;
+  eyebrow?: string;
+  heading?: string;
+  description?: string;
+  image1?: StrapiMedia | null;
+  image2?: StrapiMedia | null;
+  bgImageUrl?: string;
+  fillImageUrl?: string;
+  emblemImageUrl?: string;
 }
 
 export interface AboutSectionData {
@@ -181,6 +272,7 @@ export interface HomePageData {
   description2?: string;
   Slider?: StrapiMedia[];
   button?: HomeButtonData[];
+  Twenty_Years?: TwentyYearsData;
 
   hero?: HeroSectionData;
   excellenceBanner?: ExcellenceBannerData;
@@ -299,6 +391,8 @@ export interface AboutPageData {
   founderParagraphs?: string[];
   founderQuote?: string;
   founderClosing?: string;
+  founderCommitmentsHeading?: string;
+  founderCommitments?: string[];
   founderName?: string;
   founderRole?: string;
   founderInstitution?: string;
@@ -320,11 +414,19 @@ export interface LearningCommonContentItem {
   image?: StrapiMedia | null;
 }
 
+export interface LearningContentBlock {
+  type: "paragraph" | "lead_in" | "bullets";
+  text?: string;
+  items?: string[];
+}
+
 export interface LearningStageItem {
   id?: number;
   stageId: string;
+  eyebrow?: string;
   subLabel?: string;
   title: string;
+  blocks?: LearningContentBlock[];
   boldIntro?: string;
   description: string[];
   activities?: string[];
@@ -528,6 +630,12 @@ export interface AdmissionButtonData {
   download?: AdmissionButtonDownload | StrapiMedia | null;
 }
 
+export interface AdmissionDownloadButton {
+  id?: number;
+  label: string;
+  href: string;
+}
+
 export interface AdmissionSectionData {
   id?: number;
   eyebrow?: string;
@@ -538,7 +646,7 @@ export interface AdmissionSectionData {
   conatact_label?: string;
   Phone_number?: string;
   phone?: string;
-  admissionbutton?: AdmissionButtonData | null;
+  admissionbutton?: AdmissionButtonData | AdmissionButtonData[] | null;
 }
 
 export interface AdmissionGuidelinesData {
@@ -601,6 +709,7 @@ export interface AdmissionEnquiryData {
   phone?: string;
   downloadLabel?: string;
   downloadHref?: string;
+  downloadButtons?: AdmissionDownloadButton[];
   admissionFormFile?: StrapiMedia;
 }
 
@@ -673,6 +782,7 @@ export interface EventItem {
   description: string;
   category: string;
   image: string;
+  images?: string[];
   imageAlt: string;
   time?: string;
   venue?: string;
@@ -921,6 +1031,8 @@ export interface ClubsPageData {
   documentId?: string;
   Clubs_Activities_Card?: ClubsActivitiesHeroData;
   Clubs_Card?: ClubsCardItemData[];
+  clubs_description?: string;
+  description?: string;
   bannerTitle?: string;
   breadcrumb?: string[];
   bannerImage?: string;
@@ -938,6 +1050,70 @@ export interface ContactItemData {
   values?: string[];
 }
 
+export interface StrapiContactHero {
+  id?: number;
+  title?: string;
+  Breadcrumbs?: string[];
+  hero_background?: StrapiMedia;
+}
+
+export interface StrapiContactGetInTouch {
+  id?: number;
+  eyebrow?: string;
+  heading?: string;
+  description?: string;
+  address?: string;
+  address_desc?: string;
+  phone?: string | null;
+  phone_input?: string | null;
+  Mobile?: string;
+  mobile_input?: string;
+  email?: string;
+  email_input?: string;
+  OfiiceHr?: string;
+  time?: string;
+}
+
+export interface StrapiContactSendMessage {
+  id?: number;
+  eyebrow?: string | null;
+  heading?: string | null;
+  description?: string | null;
+  name_label?: string | null;
+  name_placeholder?: string | null;
+  name_input?: string | null;
+  email_label?: string | null;
+  email_placeholder?: string | null;
+  email_input?: string | null;
+  phone_label?: string | null;
+  phone_placeholder?: string | null;
+  phone_input?: string | null;
+  subject_label?: string | null;
+  subject_placeholder?: string | null;
+  subject_input?: string | null;
+  message_label?: string | null;
+  message_placeholder?: string | null;
+  message_input?: string | null;
+}
+
+export interface StrapiContactVisit {
+  id?: number;
+  eyebrow?: string;
+  heading?: string;
+  description?: string;
+  mapEmbedUrl?: string;
+  mapLink?: string;
+}
+
+export interface StrapiContactPageRaw {
+  id?: number;
+  documentId?: string;
+  contact_hero?: StrapiContactHero;
+  get_in_Touch?: StrapiContactGetInTouch;
+  send_message?: StrapiContactSendMessage[] | StrapiContactSendMessage;
+  visit?: StrapiContactVisit;
+}
+
 export interface ContactPageData {
   id?: number;
   documentId?: string;
@@ -949,6 +1125,7 @@ export interface ContactPageData {
   getInTouchHeading?: string;
   getInTouchDescription?: string;
   contactItems?: ContactItemData[];
+  formEyebrow?: string;
   formHeading?: string;
   formDescription?: string;
   formSubmitLabel?: string;
@@ -959,6 +1136,105 @@ export interface ContactPageData {
   mapDirectUrl?: string;
   mapTitle?: string;
 }
+
+export interface DisclosureDocument {
+  slNo: number | string;
+  title: string;
+  badge?: string;
+  description?: string;
+  officialName?: string;
+  refNo?: string;
+  issueDate?: string;
+  authority?: string;
+  validity?: string;
+  category: "documents" | "academics";
+  hasDoc: boolean;
+  documentLink?: string;
+  fileSize?: string;
+  pdfUrl?: string;
+}
+
+export interface DisclosureDownloadFile {
+  id?: number;
+  documentId?: string;
+  url: string;
+  name?: string;
+  mime?: string;
+}
+
+export interface DisclosureRowData {
+  id: number;
+  sl: string;
+  information: string;
+  DETAILS?: string | null;
+  Download_text?: string | null;
+  url?: string | null;
+  download?: DisclosureDownloadFile | null;
+}
+
+export interface DisclosureRowHeading {
+  id: number;
+  Sl_No?: string;
+  INFORMATION?: string;
+  DETAILS?: string;
+  row_data: DisclosureRowData[];
+}
+
+export interface DisclosureTable {
+  id: number;
+  heading: string;
+  Row_heading: DisclosureRowHeading[];
+}
+
+export interface ResultTableRowData {
+  id: number;
+  Sl_No?: string | null;
+  YEAR?: string | null;
+  NoOfRegistration?: string | null;
+  NoOfStudentPass?: string | null;
+  PassPercentage?: string | null;
+  Remark?: string | null;
+}
+
+export interface ResultTableGroup {
+  id: number;
+  Sl_No?: string;
+  YEAR?: string;
+  NO_OF_REGISTERED_STUDENTS?: string;
+  NoOfStudentPass?: string;
+  Pass_Percentage?: string;
+  REMARKS?: string;
+  ResultTableRowData: ResultTableRowData[];
+}
+
+export interface DisclosureResultSection {
+  id: number;
+  heading: string;
+  Result: ResultTableGroup[];
+}
+
+export interface MandatoryDisclosureHero {
+  id?: number;
+  title: string;
+  Breadcrumbs?: string[];
+  hero_background?: StrapiMedia;
+}
+
+export interface MandatoryDisclosurePageData {
+  id: number;
+  documentId?: string;
+  eyebrow?: string;
+  heading?: string;
+  description?: string;
+  Note?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  publishedAt?: string;
+  Hero?: MandatoryDisclosureHero;
+  Table: DisclosureTable[];
+  Result: DisclosureResultSection[];
+}
+
 
 
 

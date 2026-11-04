@@ -11,6 +11,7 @@ import {
   StrapiMedia,
   AboutPageData,
   LearningPageData,
+  LearningContentBlock,
   CampusPageData,
   GalleryCardItem,
   ActivityItemData,
@@ -18,6 +19,7 @@ import {
   GalleryPageData,
   GalleryPageImageItem,
   AdmissionPageData,
+  AdmissionDownloadButton,
   AdmissionFeeTable,
   AdmissionFeeRow,
   EventsPageData,
@@ -30,6 +32,9 @@ import {
   ClubsPageData,
   Club,
   ContactPageData,
+  ContactItemData,
+  StrapiContactPageRaw,
+  MandatoryDisclosurePageData,
 } from "@/types/strapi";
 
 const RAW_STRAPI_URL =
@@ -91,10 +96,7 @@ async function fetchStrapi<T>(endpoint: string, tags: string[] = []): Promise<T 
           ? { Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}` }
           : {}),
       },
-      next: {
-        revalidate: 60,
-        tags: tags.length > 0 ? tags : undefined,
-      },
+      cache: "no-store",
     });
 
     if (!res.ok) {
@@ -136,14 +138,32 @@ export async function getGlobalSettings(): Promise<GlobalSettingData | null> {
  * Fetch Header Singleton Data (School Name, Logo, Nav Links, More Links, Action Buttons, Top Notice)
  */
 export async function getHeaderData(): Promise<HeaderData | null> {
-  return fetchStrapi<HeaderData>("header?populate=*", ["header"]);
+  const query = [
+    "populate[logo][fields][0]=url",
+    "populate[logo][fields][1]=alternativeText",
+    "populate[menu_item][populate][children]=true",
+  ].join("&");
+
+  return fetchStrapi<HeaderData>(`header?${query}`, ["header"]);
 }
 
 /**
  * Fetch Footer Singleton Data (Tagline, CBSE, Logo, FooterBg, Quick Links, Important Links, Contacts, Socials)
  */
 export async function getFooterData(): Promise<FooterData | null> {
-  return fetchStrapi<FooterData>("footer?populate=*", ["footer"]);
+  const query = [
+    "populate[button]=true",
+    "populate[Footer_card][populate][logo][fields][0]=url",
+    "populate[Footer_card][populate][logo][fields][1]=alternativeText",
+    "populate[Footer_card][populate][social_link][populate][icon][fields][0]=url",
+    "populate[Footer_card][populate][social_link][populate][icon][fields][1]=alternativeText",
+    "populate[Footer_card][populate][Links][populate][Name_url]=true",
+    "populate[Footer_card][populate][Contact_us][populate][heading_desc]=true",
+    "populate[Background_image][fields][0]=url",
+    "populate[Background_image][fields][1]=alternativeText",
+  ].join("&");
+
+  return fetchStrapi<FooterData>(`footer?${query}`, ["footer"]);
 }
 
 /**
@@ -154,6 +174,10 @@ export async function getHomePageData(): Promise<HomePageData | null> {
     "populate[Slider][fields][0]=url",
     "populate[Slider][fields][1]=alternativeText",
     "populate[button]=true",
+    "populate[Twenty_Years][populate][image1][fields][0]=url",
+    "populate[Twenty_Years][populate][image1][fields][1]=alternativeText",
+    "populate[Twenty_Years][populate][image2][fields][0]=url",
+    "populate[Twenty_Years][populate][image2][fields][1]=alternativeText",
   ].join("&");
 
   const raw = await fetchStrapi<any>(`home-page?${query}`, ["home-page"]);
@@ -211,25 +235,25 @@ export async function getHomePageData(): Promise<HomePageData | null> {
     slides,
   };
 
-  // 4. Map Excellence Banner
-  let yearsEmblem = "20+";
-  let yearsLabel = "Years";
-  if (raw.box) {
-    const boxParts = raw.box.trim().split(/\s+/);
-    if (boxParts.length > 0) {
-      yearsEmblem = boxParts[0];
-      yearsLabel = boxParts.slice(1).join(" ") || "Years";
-    }
-  }
+  // 4. Map Twenty_Years / Excellence Banner
+  const ty = raw.Twenty_Years;
+  const bgImg = ty?.image1 ? getStrapiMediaUrl(ty.image1) : "";
+  const fillImg = ty?.image2 ? getStrapiMediaUrl(ty.image2) : "";
 
   const excellenceBanner: ExcellenceBannerData = {
-    yearsEmblem,
-    yearsLabel,
-    subtitle: "Excellence in Education",
-    heading: raw.heading2 || "20+ Years of Academic Excellence",
+    eyebrow: ty?.eyebrow || "A LEGACY OF LEARNING AND EXCELLENCE",
+    subtitle: ty?.eyebrow || "A LEGACY OF LEARNING AND EXCELLENCE",
+    heading: ty?.heading || "Years of Academic Excellence.",
     description:
-      raw.description2 ||
-      "Nurturing curious, confident, and capable learners in Manipur since 2005.",
+      ty?.description ||
+      "For over two decades, we've nurtured curiosity, inspired confidence, and helped young minds discover their potential.",
+    image1: ty?.image1 || null,
+    image2: ty?.image2 || null,
+    bgImageUrl: bgImg,
+    fillImageUrl: fillImg,
+    emblemImageUrl: fillImg,
+    yearsEmblem: "20+",
+    yearsLabel: "Years",
   };
 
   return {
@@ -332,33 +356,99 @@ export async function getAboutPageData(): Promise<AboutPageData | null> {
   const founderSec = raw.founder_section;
   const founderDetails = founderSec?.founder_details;
   const founderDesc = founderDetails?.description || "";
-  const founderParas = founderDesc
-    .split(/\n\s*\n/)
-    .map((p: string) => p.trim())
-    .filter(Boolean);
-
-  let founderWelcome = "";
-  let founderQuote = "";
-  let founderClosing = "";
-  const bodyParas: string[] = [];
-
-  for (let i = 0; i < founderParas.length; i++) {
-    const p = founderParas[i];
-    if (i === 0 && (p.toLowerCase().startsWith("welcome") || founderParas.length > 2)) {
-      founderWelcome = p;
-    } else if (
-      p.startsWith('"') ||
-      p.startsWith('“') ||
-      (p.endsWith('"') && p.includes('"')) ||
-      (p.endsWith('”') && p.includes('“'))
-    ) {
-      founderQuote = p;
-    } else if (i === founderParas.length - 1 && founderParas.length > 3) {
-      founderClosing = p;
-    } else {
-      bodyParas.push(p);
+  
+  // Intelligent parser for founder message containing paragraphs, bullet points, and closing statement
+  const parseFounderDesc = (text: string) => {
+    if (!text) {
+      return {
+        welcome: "",
+        paragraphs: [] as string[],
+        commitmentsHeading: "",
+        commitments: [] as string[],
+        closing: "",
+      };
     }
-  }
+
+    const lines = text
+      .replace(/\r\n/g, "\n")
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    const paragraphs: string[] = [];
+    let currentPara: string[] = [];
+    let commitmentsHeading = "";
+    const commitments: string[] = [];
+    const closingLines: string[] = [];
+    let inBullets = false;
+    let inClosing = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      if (line.toLowerCase().startsWith("as we look to the future")) {
+        if (currentPara.length) {
+          paragraphs.push(currentPara.join(" "));
+          currentPara = [];
+        }
+        commitmentsHeading = line;
+        inBullets = true;
+        continue;
+      }
+
+      if (inBullets) {
+        if (
+          line.toLowerCase().startsWith("to our prospective") ||
+          line.toLowerCase().startsWith("together, let us")
+        ) {
+          inBullets = false;
+          inClosing = true;
+          closingLines.push(line);
+        } else {
+          commitments.push(line.replace(/^[•\-\*]\s*/, ""));
+        }
+        continue;
+      }
+
+      if (inClosing) {
+        closingLines.push(line);
+        continue;
+      }
+
+      const isNewParaStart =
+        line.startsWith("At Kids' Foundation") ||
+        line.startsWith("At Kids Foundation") ||
+        line.startsWith("Our CBSE-affiliated") ||
+        line.startsWith("Our CBSE affiliated") ||
+        line.startsWith("Our school's core values") ||
+        line.startsWith("Our school core values");
+
+      if (isNewParaStart && currentPara.length > 0) {
+        paragraphs.push(currentPara.join(" "));
+        currentPara = [line];
+      } else {
+        currentPara.push(line);
+      }
+    }
+
+    if (currentPara.length) {
+      paragraphs.push(currentPara.join(" "));
+    }
+
+    const welcome = paragraphs.length > 0 ? paragraphs[0] : "";
+    const remainingParas = paragraphs.slice(1);
+
+    return {
+      welcome,
+      paragraphs: remainingParas,
+      commitmentsHeading:
+        commitmentsHeading || "As we look to the future, we remain committed to:",
+      commitments,
+      closing: closingLines.join(" "),
+    };
+  };
+
+  const parsedFounder = parseFounderDesc(founderDesc);
 
   // Format pillars from mission_vison
   const missionVisionList = raw.mission_vison || [];
@@ -386,11 +476,13 @@ export async function getAboutPageData(): Promise<AboutPageData | null> {
     storyBottomParagraphs,
     pillars,
     founderTag: founderDetails?.eyebrow || "",
-    founderHeading: founderDetails?.heading || "",
-    founderWelcome,
-    founderParagraphs: bodyParas,
-    founderQuote,
-    founderClosing,
+    founderHeading: founderDetails?.heading || "Message From The Founder",
+    founderWelcome: parsedFounder.welcome,
+    founderParagraphs: parsedFounder.paragraphs,
+    founderQuote: "",
+    founderCommitmentsHeading: parsedFounder.commitmentsHeading,
+    founderCommitments: parsedFounder.commitments,
+    founderClosing: parsedFounder.closing,
     founderName: founderSec?.name || "",
     founderRole: founderSec?.designation || "",
     founderInstitution: founderSec?.description || "",
@@ -399,53 +491,175 @@ export async function getAboutPageData(): Promise<AboutPageData | null> {
 }
 
 /**
- * Helper to parse a stage's description text into structured boldIntro, paragraphs, activities, and bottomText
+ * Helper to parse a stage's description text into structured blocks (paragraphs, lead-ins, bullet lists)
  */
 function parseStageContent(rawDesc: string) {
-  const paras = rawDesc.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
-  let boldIntro: string | undefined = undefined;
+  if (!rawDesc) {
+    return {
+      blocks: [] as LearningContentBlock[],
+      boldIntro: undefined,
+      description: [] as string[],
+      activities: [] as string[],
+      bottomText: undefined,
+    };
+  }
+
+  const lines = rawDesc
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  const isLeadIn = (l: string) => {
+    const low = l.toLowerCase();
+    return (
+      low.includes("caters to the following developments") ||
+      low.startsWith("these learning activities are based on") ||
+      low.startsWith("this stage focuses on preparing the child") ||
+      low.startsWith("the outcome of these") ||
+      low.startsWith("the evaluation and assessment of this stage") ||
+      low.startsWith("the key obectives are to form") ||
+      low.startsWith("the key objectives are to form")
+    );
+  };
+
+  const isBulletStart = (l: string) => {
+    const low = l.toLowerCase();
+    return (
+      low.startsWith("develops cognitive") ||
+      low.startsWith("enhances language") ||
+      low.startsWith("encourages exploration") ||
+      low.startsWith("builds foundational") ||
+      low.startsWith("integrates art,") ||
+      low.startsWith("emphasizes social and") ||
+      low.startsWith("confident, curious,") ||
+      low.startsWith("provide strong foundation") ||
+      low.startsWith("develop social skills") ||
+      low.startsWith("assessment is done in a continuous") ||
+      low.startsWith("consolidates reading") ||
+      low.startsWith("introduces basic concepts") ||
+      low.startsWith("develops critical thinking") ||
+      low.startsWith("encourages creativity,") ||
+      low.startsWith("fosters social and emotional") ||
+      low.startsWith("emphasizes experiential") ||
+      low.startsWith("confident, expressive,") ||
+      low.startsWith("strong foundation in core") ||
+      low.startsWith("a developed critical thinking") ||
+      low.startsWith("multidisciplinary education") ||
+      low.startsWith("critical thinking and problem-solving") ||
+      low.startsWith("confident, informed,") ||
+      low.startsWith("strong foundation for secondary") ||
+      low.startsWith("developed critical thinking and life")
+    );
+  };
+
+  const isParagraphStart = (l: string) => {
+    const low = l.toLowerCase();
+    return (
+      low.startsWith("the foundational stage") ||
+      low.startsWith("in kids' foundation") ||
+      low.startsWith("in kids foundation") ||
+      low.startsWith("this stage sets the foundation") ||
+      low.startsWith("the preparatory stage") ||
+      low.startsWith("the middle stage") ||
+      low.startsWith("the assessment of the students") ||
+      low.startsWith("this stage prepares students") ||
+      low.startsWith("at kids' foundation") ||
+      low.startsWith("at kids foundation") ||
+      low.startsWith("beyond academics") ||
+      low.startsWith("our supportive environment") ||
+      low.startsWith("assessment is done continuously") ||
+      low.startsWith("join kids' foundation") ||
+      low.startsWith("join kids foundation") ||
+      low.startsWith("our school proudly offers")
+    );
+  };
+
+  const blocks: LearningContentBlock[] = [];
+  let currentBullets: string[] = [];
+  let currentPara: string[] = [];
+
+  const flushBullets = () => {
+    if (currentBullets.length) {
+      blocks.push({ type: "bullets", items: currentBullets });
+      currentBullets = [];
+    }
+  };
+
+  const flushPara = () => {
+    if (currentPara.length) {
+      blocks.push({ type: "paragraph", text: currentPara.join(" ") });
+      currentPara = [];
+    }
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (
+      line.toLowerCase().startsWith("these learning activities are based on") &&
+      i + 1 < lines.length &&
+      lines[i + 1].toLowerCase().includes("caters to the following developments")
+    ) {
+      flushBullets();
+      flushPara();
+      blocks.push({
+        type: "lead_in",
+        text: "These learning activities are based on playway method of teaching and caters to the following developments-",
+      });
+      i++;
+      continue;
+    }
+
+    if (isLeadIn(line)) {
+      flushBullets();
+      flushPara();
+      const clean = line.replace(/[-:]\s*$/, "").trim();
+      blocks.push({ type: "lead_in", text: `${clean} -` });
+      continue;
+    }
+
+    if (isBulletStart(line)) {
+      flushPara();
+      currentBullets.push(line);
+      continue;
+    }
+
+    if (isParagraphStart(line)) {
+      flushBullets();
+      flushPara();
+      currentPara.push(line);
+      continue;
+    }
+
+    if (currentBullets.length > 0) {
+      currentBullets[currentBullets.length - 1] += ` ${line}`;
+    } else {
+      currentPara.push(line);
+    }
+  }
+
+  flushBullets();
+  flushPara();
+
   const description: string[] = [];
   const activities: string[] = [];
+  let boldIntro: string | undefined = undefined;
   let bottomText: string | undefined = undefined;
 
-  let startIndex = 0;
-  if (paras.length > 1 && paras[0].length < 120 && !paras[0].endsWith(":")) {
-    if (paras[0].length <= 80 || paras[0].endsWith(".")) {
-      boldIntro = paras[0];
-      startIndex = 1;
-    }
-  }
-
-  for (let i = startIndex; i < paras.length; i++) {
-    const p = paras[i];
-    const sublines = p.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
-    const hasActivities = sublines.some(
-      (l) => l.length > 2 && l.length < 50 && l === l.toUpperCase() && !l.includes(".")
-    );
-
-    if (hasActivities) {
-      for (const line of sublines) {
-        if (line.length > 2 && line.length < 50 && line === line.toUpperCase() && !line.includes(".")) {
-          activities.push(line);
-        } else if (
-          line.toLowerCase().includes("these activities are included") ||
-          line.toLowerCase().includes("in sync with nature")
-        ) {
-          bottomText = line;
-        } else if (activities.length === 0) {
-          description.push(line);
-        } else {
-          bottomText = (bottomText ? `${bottomText} ` : "") + line;
-        }
+  for (const block of blocks) {
+    if (block.type === "paragraph" && block.text) {
+      if (!boldIntro && block.text.length < 120 && (block.text.length < 80 || block.text.endsWith("."))) {
+        boldIntro = block.text;
+      } else {
+        description.push(block.text);
       }
-    } else if (activities.length > 0) {
-      bottomText = (bottomText ? `${bottomText}\n\n` : "") + p;
-    } else {
-      description.push(p);
+    } else if (block.type === "bullets" && block.items) {
+      activities.push(...block.items);
     }
   }
 
-  return { boldIntro, description, activities, bottomText };
+  return { blocks, boldIntro, description, activities, bottomText };
 }
 
 /**
@@ -465,23 +679,45 @@ export async function getLearningPageData(): Promise<LearningPageData | null> {
   const hero = raw.learning_hero;
   const commonContent: any[] = raw.common_content || [];
 
-  // Identify intro block (typically the first item, or one with eyebrow)
-  const introBlock = commonContent.find((item) => item.eyebrow) || commonContent[0];
-  const stageBlocks = commonContent.filter((item) => item !== introBlock);
+  // Identify intro block: the first item in common_content
+  const introBlock = commonContent.length > 0 ? commonContent[0] : null;
+  const stageBlocks = commonContent.length > 1 ? commonContent.slice(1) : [];
 
   const stages = stageBlocks.map((st, idx) => {
     const parsed = parseStageContent(st.description || "");
-    const heading = st.heading || `Stage ${idx + 1}`;
+    let heading = (st.heading || "").trim();
+    if (!heading) {
+      if (st.description?.toLowerCase().includes("middle stage") || st.eyebrow?.includes("6-8")) {
+        heading = "Middle Stage";
+      } else if (idx === 0) {
+        heading = "Foundational Stage";
+      } else if (idx === 1) {
+        heading = "Preparatory Stage";
+      } else if (idx === 2) {
+        heading = "Middle Stage";
+      } else if (idx === 3) {
+        heading = "Secondary Stage";
+      } else {
+        heading = `Stage ${idx + 1}`;
+      }
+    }
+
+    const eyebrow = (st.eyebrow || "").trim();
     const stageId = heading
-      .toLowerCase()
-      .replace(/learning/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+      ? heading
+          .toLowerCase()
+          .replace(/learning/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "")
+      : `stage-${idx + 1}`;
 
     return {
       id: st.id || idx + 1,
       stageId: stageId || `stage-${idx + 1}`,
       title: heading,
+      eyebrow,
+      subLabel: eyebrow,
+      blocks: parsed.blocks,
       boldIntro: parsed.boldIntro,
       description: parsed.description,
       activities: parsed.activities.length > 0 ? parsed.activities : undefined,
@@ -491,17 +727,22 @@ export async function getLearningPageData(): Promise<LearningPageData | null> {
     };
   });
 
+  const cleanIntroText = (introBlock?.description || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/([^\n])\n([^\n])/g, "$1 $2")
+    .trim();
+
   return {
     ...raw,
     learning_hero: hero,
     common_content: commonContent,
 
-    // Mapped convenience fields
+    // Mapped convenience fields strictly from Strapi
     pageTitle: hero?.title || "Learning",
     breadcrumb: hero?.Breadcrumbs || ["Learning"],
-    introLabel: introBlock?.eyebrow || "OUR APPROACH",
-    introHeading: introBlock?.heading || "Building the right foundation through learning",
-    introText: introBlock?.description || "",
+    introLabel: (introBlock?.eyebrow || "").trim(),
+    introHeading: (introBlock?.heading || "").trim(),
+    introText: cleanIntroText,
     stages,
   };
 }
@@ -725,9 +966,28 @@ export async function getAdmissionPageData(): Promise<AdmissionPageData | null> 
   const guidelines = raw.Guidelines;
   const feeDetails = raw.Fee_Details;
 
-  const downloadFile = admission?.admissionbutton?.download;
-  const downloadUrl = downloadFile ? getStrapiMediaUrl(downloadFile) : "";
-  const downloadLabel = admission?.admissionbutton?.text || "Download Admission Form";
+  const rawButtons: any[] = Array.isArray(admission?.admissionbutton)
+    ? admission.admissionbutton
+    : admission?.admissionbutton
+    ? [admission.admissionbutton]
+    : [];
+
+  const downloadButtons: AdmissionDownloadButton[] = rawButtons
+    .map((btn: any) => {
+      const file = btn?.download;
+      const href = file ? getStrapiMediaUrl(file) : "";
+      const label = btn?.text?.trim() || "Download Admission Form";
+      return {
+        id: btn?.id,
+        label,
+        href,
+      };
+    })
+    .filter((b) => Boolean(b.href) && b.href !== "#");
+
+  const primaryDownload = downloadButtons[0];
+  const downloadUrl = primaryDownload?.href || "";
+  const downloadLabel = primaryDownload?.label || "Download Admission Form";
 
   const feeTables: AdmissionFeeTable[] = (feeDetails?.Fee_Table || []).map((table: any, idx: number) => {
     const title = table.TUITION_FEES || (idx === 0 ? "TUITION FEES" : "Admission Fees");
@@ -769,6 +1029,7 @@ export async function getAdmissionPageData(): Promise<AdmissionPageData | null> 
       phone: admission?.Phone_number || admission?.phone || "0385-2456231",
       downloadLabel,
       downloadHref: downloadUrl || "#",
+      downloadButtons,
     },
 
     procedures: {
@@ -813,8 +1074,8 @@ function formatEventTime(timeStr?: string): string {
  * Helper to parse and format event dates
  */
 function parseEventDate(dateStr?: string) {
-  if (!dateStr) {
-    return { month: "Jan", day: "01", year: "2026", formatted: "" };
+  if (!dateStr || !dateStr.trim()) {
+    return { month: "", day: "", year: "", formatted: "" };
   }
   const ymdMatch = dateStr.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (ymdMatch) {
@@ -835,11 +1096,11 @@ function parseEventDate(dateStr?: string) {
   }
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) {
-    const parts = dateStr.split(" ");
+    const parts = dateStr.trim().split(" ");
     return {
-      month: parts[0]?.slice(0, 3) ?? "Jan",
-      day: parts[1]?.replace(",", "") ?? "01",
-      year: parts[2] ?? "2026",
+      month: parts[0]?.slice(0, 3) ?? "",
+      day: parts[1]?.replace(",", "") ?? "",
+      year: parts[2] ?? "",
       formatted: dateStr,
     };
   }
@@ -898,9 +1159,17 @@ export async function getEventsPageData(): Promise<EventsPageData | null> {
           .filter(Boolean)
       : [];
 
-    const imageUrl = getStrapiMediaUrl(card.image) || "";
+    const imagesRaw = Array.isArray(card.image)
+      ? card.image
+      : card.image
+      ? [card.image]
+      : [];
+    const imagesList: string[] = imagesRaw
+      .map((img: any) => getStrapiMediaUrl(img) || "")
+      .filter(Boolean);
+    const imageUrl = imagesList[0] || getStrapiMediaUrl(card.image) || "";
     const imageAlt =
-      card.image?.alternativeText || card.heading || "Event image";
+      imagesRaw[0]?.alternativeText || card.heading || "Event image";
 
     return {
       id: `event-${card.id || idx + 1}`,
@@ -914,6 +1183,7 @@ export async function getEventsPageData(): Promise<EventsPageData | null> {
       description: rawDesc,
       category: card.Category?.trim() || "School Events",
       image: imageUrl,
+      images: imagesList.length > 0 ? imagesList : imageUrl ? [imageUrl] : [],
       imageAlt,
       time,
       venue: card.venue || undefined,
@@ -1143,7 +1413,7 @@ export async function getClubsPageData(): Promise<ClubsPageData | null> {
 
   const clubs: Club[] = cards.map((card, idx) => {
     const title = card.heading || "Student Club";
-    const category = card.category?.trim() || "Activities";
+    const category = (card.Category || card.category || "").trim() || "Activities";
     const desc = card.description || "";
     const imageUrl = getStrapiMediaUrl(card.image) || "/images/banner_images/banner.jpg";
 
@@ -1178,19 +1448,124 @@ export async function getClubsPageData(): Promise<ClubsPageData | null> {
     bannerTitle: hero?.title || "Clubs & Activities",
     bannerImage: getStrapiMediaUrl(hero?.hero_background) || "",
     breadcrumb: hero?.Breadcrumbs || ["Home", "Clubs & Activities"],
-    overviewHeading: "Beyond the Textbook: Cultivating Curiosity, Leadership & Passion",
-    overviewDescription: "At Kids' Foundation School, learning extends far beyond academic syllabi. Our vibrant clubs and student societies provide every learner the space to discover hidden talents, collaborate with peers across grades, compete in state and national arenas, and build lifelong self-confidence.",
+    clubs_description: raw.clubs_description || "",
+    description: raw.clubs_description || "",
     categories,
     clubs,
   };
 }
 
 /**
+ * Helper to extract src from an iframe HTML string, or return the string as is if already a URL
+ */
+function extractIframeSrc(input?: string | null): string {
+  if (!input) return "";
+  const match = input.match(/src=["'](.*?)["']/);
+  return match ? match[1] : input.trim();
+}
+
+/**
   * Fetch Contact Page Singleton Data (Banner, Contact Items, Form info, Map)
   */
 export async function getContactPageData(): Promise<ContactPageData | null> {
-  const query = "populate[contactItems]=true";
-  return fetchStrapi<ContactPageData>(`contact-page?${query}`, ["contact-page"]);
+  const query = [
+    "populate[contact_hero][populate][hero_background][fields][0]=url",
+    "populate[contact_hero][populate][hero_background][fields][1]=alternativeText",
+    "populate[get_in_Touch]=true",
+    "populate[send_message]=true",
+    "populate[visit]=true",
+  ].join("&");
+
+  const raw = await fetchStrapi<StrapiContactPageRaw>(`contact-page?${query}`, ["contact-page"]);
+  if (!raw) return null;
+
+  const hero = raw.contact_hero;
+  const git = raw.get_in_Touch;
+  const smList = Array.isArray(raw.send_message)
+    ? raw.send_message
+    : raw.send_message
+    ? [raw.send_message]
+    : [];
+  const sm = smList[0];
+  const visit = raw.visit;
+
+  const contactItems: ContactItemData[] = [];
+  if (git?.address_desc) {
+    contactItems.push({
+      icon: "map-pin",
+      label: git.address || "Address",
+      value: git.address_desc,
+    });
+  }
+  if (git?.mobile_input) {
+    contactItems.push({
+      icon: "smartphone",
+      label: git.Mobile || "Mobile",
+      value: git.mobile_input,
+    });
+  }
+  if (git?.phone_input) {
+    contactItems.push({
+      icon: "phone",
+      label: git.phone || "Phone",
+      value: git.phone_input,
+    });
+  }
+  if (git?.email_input) {
+    contactItems.push({
+      icon: "mail",
+      label: git.email || "Email",
+      value: git.email_input,
+    });
+  }
+  if (git?.time) {
+    contactItems.push({
+      icon: "clock",
+      label: git.OfiiceHr || "Office Hours",
+      value: git.time,
+    });
+  }
+
+  return {
+    id: raw.id,
+    documentId: raw.documentId,
+    bannerTitle: hero?.title || "Contact Us",
+    breadcrumb:
+      hero?.Breadcrumbs && hero.Breadcrumbs.length > 0
+        ? hero.Breadcrumbs
+        : ["Home", "Contact"],
+    bannerImage: hero?.hero_background,
+    bannerImageUrl: getStrapiMediaUrl(hero?.hero_background) || undefined,
+    getInTouchLabel: git?.eyebrow || undefined,
+    getInTouchHeading: git?.heading || undefined,
+    getInTouchDescription: git?.description || undefined,
+    contactItems,
+    formEyebrow: sm?.eyebrow || undefined,
+    formHeading: sm?.heading || undefined,
+    formDescription: sm?.description || undefined,
+    mapLabel: visit?.eyebrow || undefined,
+    mapHeading: visit?.heading || undefined,
+    mapAddress: visit?.description || undefined,
+    mapEmbedUrl: extractIframeSrc(visit?.mapEmbedUrl),
+    mapDirectUrl: visit?.mapLink || undefined,
+    mapTitle: visit?.heading ? `${visit.heading} Location` : undefined,
+  };
+}
+
+/**
+ * Fetch Mandatory Public Disclosure Page Singleton Data
+ */
+export async function getMandatoryDisclosurePageData(): Promise<MandatoryDisclosurePageData | null> {
+  const query = [
+    "populate[Hero][populate][hero_background][fields][0]=url",
+    "populate[Hero][populate][hero_background][fields][1]=alternativeText",
+    "populate[Table][populate][Row_heading][populate][row_data][populate][download][fields][0]=url",
+    "populate[Table][populate][Row_heading][populate][row_data][populate][download][fields][1]=name",
+    "populate[Table][populate][Row_heading][populate][row_data][populate][download][fields][2]=mime",
+    "populate[Result][populate][Result][populate][ResultTableRowData]=true",
+  ].join("&");
+
+  return fetchStrapi<MandatoryDisclosurePageData>(`mandatory-public-disclosure?${query}`, ["mandatory-public-disclosure"]);
 }
 
 

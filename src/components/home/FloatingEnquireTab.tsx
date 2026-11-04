@@ -41,8 +41,11 @@ export function FloatingEnquireTab({ stages }: FloatingEnquireTabProps) {
   // Client-side fallback to fetch live stages from Strapi if not provided via props
   useEffect(() => {
     if (!stages || stages.length === 0) {
-      const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337";
-      fetch(`${strapiUrl}/api/learning-page?populate[stages]=true`)
+      const rawApiUrl =
+        process.env.NEXT_PUBLIC_STRAPI_API_URL ||
+        "https://admin.kidsfoundationimphal.com/api";
+      const baseApi = rawApiUrl.replace(/\/+$/, "");
+      fetch(`${baseApi}/learning-page?populate[stages]=true`)
         .then((res) => res.json())
         .then((json) => {
           if (json?.data?.stages && Array.isArray(json.data.stages)) {

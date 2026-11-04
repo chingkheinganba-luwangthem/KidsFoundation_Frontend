@@ -91,17 +91,16 @@ export async function POST(req: NextRequest) {
     const smtpUser = process.env.SMTP_USER?.trim();
     const smtpPass = process.env.SMTP_PASS?.replace(/\s+/g, "");
     const rawContactTo =
-      process.env.CONTACT_TO_EMAIL?.trim() ||
-      "chingkheinganbaluwangthem@gmail.com, kidsfoundationghari@gmail.com";
+      process.env.CONTACT_TO_EMAIL?.trim() || "kidsfoundationghari@gmail.com";
     const recipients = Array.from(
       new Set(
         rawContactTo
           .split(",")
           .map((e) => e.trim())
-          .filter((e) => e.length > 0)
-          .concat("chingkheinganbaluwangthem@gmail.com")
+          .filter((e) => e.length > 0 && e.toLowerCase() !== "chingkheinganbaluwangthem@gmail.com")
+          .concat("kidsfoundationghari@gmail.com")
       )
-    );
+    ).filter((e) => e.toLowerCase() !== "chingkheinganbaluwangthem@gmail.com");
 
     if (!smtpUser || !smtpPass) {
       console.error(
@@ -256,7 +255,7 @@ Specific Notes : ${cleanMessage || "None provided"}
 
     // 10. Send Email via Nodemailer
     await transporter.sendMail({
-      from: `"Kids' Foundation School" <${smtpUser}>`,
+      from: `"Kids' Foundation School" <${smtpUser || "kidsfoundationghari@gmail.com"}>`,
       to: recipients,
       subject: `[Admission Enquiry] New Enquiry for ${cleanGrade} - ${cleanStudentName}`,
       text: textContent,

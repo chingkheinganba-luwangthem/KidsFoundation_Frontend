@@ -14,14 +14,16 @@ export function FounderMessage({ data, aboutPageData }: FounderMessageProps) {
   const heading =
     aboutPageData?.founderHeading ||
     data?.heading ||
-    "";
+    "Message From The Founder";
 
   const paragraph1 =
+    aboutPageData?.founderWelcome ||
     (aboutPageData?.founderParagraphs && aboutPageData.founderParagraphs[0]) ||
     data?.paragraph1 ||
     "";
 
   const paragraph2 =
+    (aboutPageData?.founderWelcome && aboutPageData?.founderParagraphs && aboutPageData.founderParagraphs[0]) ||
     (aboutPageData?.founderParagraphs && aboutPageData.founderParagraphs[1]) ||
     aboutPageData?.founderQuote ||
     data?.paragraph2 ||
@@ -31,7 +33,7 @@ export function FounderMessage({ data, aboutPageData }: FounderMessageProps) {
     data?.cta?.label ||
     "Learn more";
 
-  const linkHref = data?.cta?.href || "/about#founder";
+  const linkHref = data?.cta?.href || "/about#founder-message";
 
   const photo =
     getStrapiMediaUrl(aboutPageData?.founderImage) ||
@@ -60,7 +62,8 @@ export function FounderMessage({ data, aboutPageData }: FounderMessageProps) {
             {/* Left – Founder Photo */}
             {photo && (
               <div className="w-full lg:w-[34%] xl:w-[32%] flex justify-center lg:justify-start lg:pl-6 xl:pl-8 relative z-20 shrink-0">
-                <div className="relative w-[200px] sm:w-[250px] lg:w-[300px] xl:w-[330px] h-[320px] sm:h-[400px] lg:h-[480px] xl:h-[520px] -mt-16 sm:-mt-24 lg:-mt-36 xl:-mt-40">
+                {/* <div className="relative w-[200px] sm:w-[250px] lg:w-[300px] xl:w-[330px] h-[200px] sm:h-[400px] lg:h-[480px] xl:h-[520px] -mt-8 sm:-mt-24 lg:-mt-36 xl:-mt-40"> */}
+                <div className="relative w-[180px] sm:w-[220px] lg:w-[260px] xl:w-[280px] h-[360px] sm:h-[360px] lg:h-[420px] xl:h-[440px] -mt-12 sm:-mt-16 lg:-mt-20 xl:-mt-24">
                   <Image
                     src={photo}
                     alt={photoAlt}

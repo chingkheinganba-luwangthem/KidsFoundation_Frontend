@@ -14,10 +14,14 @@ const jakartaSans = Plus_Jakarta_Sans({
   display: "swap",
 });
 
-export const instant = false;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://kidsfoundation.globizsapp.com";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://kidsfoundationimphal.com"),
+  metadataBase: new URL(SITE_URL),
   title: "Kids' Foundation | Best School in Imphal, Manipur",
   description:
     "Kids' Foundation School, Imphal — Nurturing curious, confident, and capable learners in Manipur since 2005.",
@@ -34,7 +38,7 @@ export const metadata: Metadata = {
     title: "Kids' Foundation | Best School in Imphal, Manipur",
     description:
       "Kids' Foundation School, Imphal — Nurturing curious, confident, and capable learners in Manipur since 2005.",
-    url: "https://kidsfoundationimphal.com",
+    url: SITE_URL,
     siteName: "Kids' Foundation",
     locale: "en_US",
     type: "website",
