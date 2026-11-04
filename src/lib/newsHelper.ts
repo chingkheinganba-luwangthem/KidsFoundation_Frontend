@@ -91,7 +91,7 @@ export function formatAndSortNewsArticles(
     const timestamp = parseNoticeDate(item.date, idx);
     const itemDaysThreshold = item.daysToShowLatest ?? defaultThresholdDays;
 
-    let isLatest = item.isLatest !== false;
+    let isLatest = false;
     if (now !== undefined && timestamp > 0) {
       const diffMs = now - timestamp;
       const diffDays = diffMs / (1000 * 60 * 60 * 24);
@@ -99,7 +99,7 @@ export function formatAndSortNewsArticles(
       // Notice shows "• LATEST" if within `itemDaysThreshold` days (and not explicitly false)
       // Once diffDays > itemDaysThreshold, the latest mark disappears automatically.
       const isWithinDays = diffDays <= itemDaysThreshold && diffDays >= 0;
-      isLatest = isLatest && isWithinDays;
+      isLatest = item.isLatest !== false && isWithinDays;
     }
     return {
       id: item.newsId || `news-${item.id || idx}`,

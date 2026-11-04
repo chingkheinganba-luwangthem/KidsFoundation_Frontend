@@ -205,9 +205,11 @@ export function NewsSection({
     return [];
   }, [eventsPageData]);
 
+  const [mounted, setMounted] = useState(false);
   const [currentTimestamp, setCurrentTimestamp] = useState<number | undefined>(undefined);
 
   useEffect(() => {
+    setMounted(true);
     setCurrentTimestamp(Date.now());
   }, []);
 
@@ -356,11 +358,11 @@ export function NewsSection({
                     className="group flex flex-col sm:flex-row sm:items-center rounded-2xl px-4 sm:px-7 py-3.5 sm:py-4.5 shadow-[0_2px_12px_rgba(23,52,95,0.04)] hover:shadow-[0_6px_20px_rgba(23,52,95,0.08)] transition-all duration-300 hover:-translate-y-0.5 flex-shrink-0 bg-white gap-2 sm:gap-0 min-w-0"
                   >
                     {/* Date + Optional Latest badge */}
-                    <div className="flex items-center gap-2.5 flex-wrap sm:min-w-[170px] shrink-0">
+                    <div className="flex items-center gap-2.5 flex-wrap sm:min-w-[170px] shrink-0" suppressHydrationWarning>
                       <span className="text-[11px] sm:text-xs font-semibold text-[#D97706] tracking-wide whitespace-nowrap">
                         {item.date}
                       </span>
-                      {item.isLatest && (
+                      {mounted && item.isLatest && (
                         <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 bg-rose-50 border border-rose-200/80 px-1.5 py-0.5 rounded-md">
                           • Latest
                         </span>
