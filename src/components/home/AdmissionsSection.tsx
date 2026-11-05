@@ -18,8 +18,19 @@ export function AdmissionsSection({
   buttons,
 }: AdmissionsSectionProps) {
   const displayLabel = eyebrow || data?.label || "";
-  const displayHeading = heading || data?.heading || "";
+  const rawHeading = heading || data?.heading || "";
   const displayDescription = description || data?.description || "";
+
+  // Split into two lines if it's a single line string
+  let displayHeading = rawHeading;
+  if (!displayHeading.includes("\n")) {
+    if (/Give your child the Foundation\s+to go further/i.test(displayHeading)) {
+      displayHeading = displayHeading.replace(
+        /(Give your child the Foundation)\s+(to go further[\.\!]?)/i,
+        "$1\n$2"
+      );
+    }
+  }
 
   const hasButtons = (buttons && buttons.length > 0) || data?.primaryCta || data?.secondaryCta;
 
@@ -40,7 +51,7 @@ export function AdmissionsSection({
         )}
 
         {displayHeading && (
-          <h2 className="text-2xl sm:text-3xl lg:text-[36px] font-bold text-[#17345F] leading-[1.25] tracking-tight mb-3 sm:mb-4 whitespace-pre-line">
+          <h2 className="text-2xl sm:text-3xl lg:text-[36px] font-bold text-[#17345F] leading-[1.25] tracking-tight mb-3 sm:mb-4 whitespace-pre-line max-w-xl mx-auto">
             {displayHeading}
           </h2>
         )}
