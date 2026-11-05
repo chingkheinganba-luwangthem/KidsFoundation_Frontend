@@ -123,6 +123,24 @@ export async function POST(req: NextRequest) {
     const recipients = [process.env.CONTACT_TO_EMAIL?.trim() || "kidsfoundationghari@gmail.com"];
 
     if (!smtpPass) {
+      if (process.env.NODE_ENV !== "production") {
+        console.log("----------------------------------------");
+        console.log("[DEV MODE] Contact form submitted successfully (SMTP_PASS not set):");
+        console.log("From:", `"${cleanName}" <${cleanEmail}>`);
+        console.log("Phone:", cleanPhone || "None");
+        console.log("Subject:", safeSubject);
+        console.log("Message:", cleanMessage);
+        console.log("Simulating delivery to:", recipients.join(", "));
+        console.log("----------------------------------------");
+        return NextResponse.json(
+          {
+            success: true,
+            message: "Thank you! Your message has been sent successfully. We will get back to you shortly.",
+          },
+          { status: 200 }
+        );
+      }
+
       console.warn(
         `[Contact API] Missing SMTP_PASS in environment variables. Email cannot be delivered from ${smtpUser} to ${recipients.join(", ")}.`
       );

@@ -97,6 +97,23 @@ export async function POST(req: NextRequest) {
     const recipients = [process.env.CONTACT_TO_EMAIL?.trim() || "kidsfoundationghari@gmail.com"];
 
     if (!smtpPass) {
+      if (process.env.NODE_ENV !== "production") {
+        console.log("----------------------------------------");
+        console.log("[DEV MODE] Admission enquiry submitted successfully (SMTP_PASS not set):");
+        console.log("Student:", cleanStudentName, `(${cleanGrade})`);
+        console.log("Parent Phone:", cleanParentPhone);
+        console.log("Message:", cleanMessage || "None");
+        console.log("Simulating delivery to:", recipients.join(", "));
+        console.log("----------------------------------------");
+        return NextResponse.json(
+          {
+            success: true,
+            message: "Thank you! Your admission enquiry has been submitted. Our admissions team will contact you shortly.",
+          },
+          { status: 200 }
+        );
+      }
+
       console.warn(
         `[Enquiry API] Missing SMTP_PASS in environment variables. Email cannot be delivered from ${smtpUser} to ${recipients.join(", ")}.`
       );
