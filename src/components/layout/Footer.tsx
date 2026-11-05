@@ -107,13 +107,30 @@ export function Footer({
   const logoSrc =
     getStrapiMediaUrl(card?.logo || footerData?.logo || globalData?.logo) || "";
 
-  const rawLogoName = card?.Logo_Name || globalData?.schoolName || "";
-  let schoolName = rawLogoName;
-  let location = globalData?.location || "";
-  if (rawLogoName.includes("IMPHAL")) {
-    const parts = rawLogoName.split(/(?=IMPHAL)/i);
-    schoolName = parts[0]?.trim() || rawLogoName;
-    location = parts[1]?.trim().replace(/^,\s*/, "") || location;
+  const rawLogoName = card?.Logo_Name || globalData?.schoolName || "KIDS' FOUNDATION";
+  let schoolName = "KIDS' FOUNDATION";
+  let location = "IMPHAL Manipur";
+
+  if (rawLogoName) {
+    if (/KIDS'?\s*FOUNDATION/i.test(rawLogoName)) {
+      schoolName = "KIDS' FOUNDATION";
+      const remaining = rawLogoName
+        .replace(/KIDS'?\s*FOUNDATION/i, "")
+        .trim()
+        .replace(/^[\s,-]+/, "")
+        .replace(/[\s,-]+$/, "");
+      if (remaining) {
+        if (/^IMPHAL$/i.test(remaining)) {
+          location = "IMPHAL Manipur";
+        } else {
+          location = remaining.replace(/,\s*/g, " ");
+        }
+      }
+    } else if (rawLogoName.includes("IMPHAL")) {
+      const parts = rawLogoName.split(/(?=IMPHAL)/i);
+      schoolName = parts[0]?.trim() || rawLogoName;
+      location = parts[1]?.trim().replace(/^,\s*/, "") || location;
+    }
   }
 
   const tagline = card?.description || footerData?.tagline || globalData?.tagline || "";
@@ -194,7 +211,7 @@ export function Footer({
                         </span>
                       )}
                       {location && (
-                        <span className="text-[#17345F] tracking-[0.24em] text-[11px] sm:text-[12px] font-semibold uppercase leading-tight mt-1.5">
+                        <span className="text-[#D97706] tracking-[0.22em] text-[11px] sm:text-[12px] font-semibold uppercase leading-tight mt-1">
                           {location}
                         </span>
                       )}

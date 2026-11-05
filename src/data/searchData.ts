@@ -465,7 +465,7 @@ export const SEARCH_INDEX: SearchResultItem[] = [
     title: "Contact Kids' Foundation & Campus Visit",
     category: "Contact",
     description:
-      "Airport Road, Ghari, Imphal West, Manipur – 795001. Phone: 0385-2456231, Mobile: +91 8974426944 / +91 8787302983, Email: kidsfoundationghari@gmail.com.",
+      "Airport Road, Ghari, Imphal West, Manipur – 795001. Mobile: +91 8974426944 / +91 8787302983, Email: kidsfoundationghari@gmail.com.",
     href: "/contact",
     keywords: [
       "contact",

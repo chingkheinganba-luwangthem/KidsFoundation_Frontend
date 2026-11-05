@@ -1026,7 +1026,7 @@ export async function getAdmissionPageData(): Promise<AdmissionPageData | null> 
       heading: admission?.heading || "Admission Enquiry",
       description: admission?.description || "",
       email: admission?.email || "kidsfoundationghari@gmail.com",
-      phone: admission?.Phone_number || admission?.phone || "0385-2456231",
+      phone: admission?.Phone_number || admission?.phone || "+91 8974426944",
       downloadLabel,
       downloadHref: downloadUrl || "#",
       downloadButtons,
@@ -1568,5 +1568,31 @@ export async function getMandatoryDisclosurePageData(): Promise<MandatoryDisclos
   return fetchStrapi<MandatoryDisclosurePageData>(`mandatory-public-disclosure?${query}`, ["mandatory-public-disclosure"]);
 }
 
+/**
+ * Retrieve primary contact mobile number dynamically from Strapi
+ * Falls back to "+91 8974426944" if Strapi is loading or offline
+ */
+export async function getContactMobileNumber(): Promise<string> {
+  try {
+    const contactPage = await getContactPageData();
+    const mobileItem = contactPage?.contactItems?.find(
+      (item) => item.label.toLowerCase().includes("mobile") || item.icon === "smartphone"
+    );
+    if (mobileItem?.value) {
+      return mobileItem.value.trim();
+    }
 
+    const footer = await getFooterData();
+    const contactEntries = footer?.Footer_card?.Contact_us?.heading_desc || [];
+    const footerMobile = contactEntries.find(
+      (e) => (e.heading || "").toLowerCase().includes("mobile") || (e.description || "").includes("+91")
+    );
+    if (footerMobile?.description) {
+      return footerMobile.description.trim();
+    }
+  } catch (err) {
+    console.warn("[getContactMobileNumber] Error fetching from Strapi:", err);
+  }
+  return "+91 8974426944";
+}
 

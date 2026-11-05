@@ -1,3 +1,4 @@
+import { getContactMobileNumber } from "@/lib/strapi";
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 
@@ -12,7 +13,9 @@ function escapeHtml(str: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  let contactMobile = "+91 8974426944";
   try {
+    contactMobile = await getContactMobileNumber();
     let body: Record<string, unknown>;
     try {
       body = await req.json();
@@ -86,31 +89,22 @@ export async function POST(req: NextRequest) {
     }
 
     // 6. Verify SMTP configuration
+
     const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
     const smtpPort = Number(process.env.SMTP_PORT) || 465;
-    const smtpUser = process.env.SMTP_USER?.trim();
+    const smtpUser = process.env.SMTP_USER?.trim() || "chingkheinganbaluwangthem@gmail.com";
     const smtpPass = process.env.SMTP_PASS?.replace(/\s+/g, "");
-    const rawContactTo =
-      process.env.CONTACT_TO_EMAIL?.trim() || "kidsfoundationghari@gmail.com";
-    const recipients = Array.from(
-      new Set(
-        rawContactTo
-          .split(",")
-          .map((e) => e.trim())
-          .filter((e) => e.length > 0 && e.toLowerCase() !== "chingkheinganbaluwangthem@gmail.com")
-          .concat("kidsfoundationghari@gmail.com")
-      )
-    ).filter((e) => e.toLowerCase() !== "chingkheinganbaluwangthem@gmail.com");
+    const recipients = [process.env.CONTACT_TO_EMAIL?.trim() || "kidsfoundationghari@gmail.com"];
 
-    if (!smtpUser || !smtpPass) {
-      console.error(
-        "[Enquiry API] Missing SMTP configuration (SMTP_USER or SMTP_PASS not set)."
+    if (!smtpPass) {
+      console.warn(
+        `[Enquiry API] Missing SMTP_PASS in environment variables. Email cannot be delivered from ${smtpUser} to ${recipients.join(", ")}.`
       );
       return NextResponse.json(
         {
           success: false,
           message:
-            "The enquiry service is temporarily unavailable. Please reach our admissions desk directly at kidsfoundationghari@gmail.com or call 0385-2456231.",
+            `The enquiry service is temporarily unavailable. Please reach our admissions desk directly at ${recipients[0]} or call ${contactMobile}.`,
         },
         { status: 503 }
       );
@@ -255,7 +249,7 @@ Specific Notes : ${cleanMessage || "None provided"}
 
     // 10. Send Email via Nodemailer
     await transporter.sendMail({
-      from: `"Kids' Foundation School" <${smtpUser || "kidsfoundationghari@gmail.com"}>`,
+      from: `"Kids' Foundation School" <${smtpUser}>`,
       to: recipients,
       subject: `[Admission Enquiry] New Enquiry for ${cleanGrade} - ${cleanStudentName}`,
       text: textContent,
@@ -277,7 +271,7 @@ Specific Notes : ${cleanMessage || "None provided"}
       {
         success: false,
         message:
-          "Unable to send your enquiry right now. Please try again or call the admissions desk directly at 0385-2456231.",
+          `Unable to send your enquiry right now. Please try again or call the admissions desk directly at ${contactMobile}.`,
       },
       { status: 500 }
     );

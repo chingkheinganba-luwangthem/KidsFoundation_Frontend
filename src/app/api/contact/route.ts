@@ -1,3 +1,4 @@
+import { getContactMobileNumber } from "@/lib/strapi";
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 
@@ -15,7 +16,9 @@ function escapeHtml(str: string): string {
 const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
 export async function POST(req: NextRequest) {
+  let contactMobile = "+91 8974426944";
   try {
+    contactMobile = await getContactMobileNumber();
     let body: Record<string, unknown>;
     try {
       body = await req.json();
@@ -112,31 +115,22 @@ export async function POST(req: NextRequest) {
     }
 
     // 7. Verify SMTP Configuration
+
     const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
     const smtpPort = Number(process.env.SMTP_PORT) || 465;
-    const smtpUser = process.env.SMTP_USER?.trim();
+    const smtpUser = process.env.SMTP_USER?.trim() || "chingkheinganbaluwangthem@gmail.com";
     const smtpPass = process.env.SMTP_PASS?.replace(/\s+/g, "");
-    const rawContactTo =
-      process.env.CONTACT_TO_EMAIL?.trim() || "kidsfoundationghari@gmail.com";
-    const recipients = Array.from(
-      new Set(
-        rawContactTo
-          .split(",")
-          .map((e) => e.trim())
-          .filter((e) => e.length > 0 && e.toLowerCase() !== "chingkheinganbaluwangthem@gmail.com")
-          .concat("kidsfoundationghari@gmail.com")
-      )
-    ).filter((e) => e.toLowerCase() !== "chingkheinganbaluwangthem@gmail.com");
+    const recipients = [process.env.CONTACT_TO_EMAIL?.trim() || "kidsfoundationghari@gmail.com"];
 
-    if (!smtpUser || !smtpPass) {
-      console.error(
-        "[Contact API] Missing SMTP configuration in environment variables (SMTP_USER or SMTP_PASS not set)."
+    if (!smtpPass) {
+      console.warn(
+        `[Contact API] Missing SMTP_PASS in environment variables. Email cannot be delivered from ${smtpUser} to ${recipients.join(", ")}.`
       );
       return NextResponse.json(
         {
           success: false,
           message:
-            "The email service is currently unavailable. Please reach us directly at kidsfoundationghari@gmail.com or call 0385-2456231.",
+            `The email service is currently unavailable. Please reach us directly at ${recipients[0]} or call ${contactMobile}.`,
         },
         { status: 503 }
       );
@@ -295,7 +289,7 @@ ${escapeHtml(cleanMessage)}
 
     // 11. Send Email via Nodemailer
     await transporter.sendMail({
-      from: `"Kids' Foundation School" <${smtpUser || "kidsfoundationghari@gmail.com"}>`,
+      from: `"Kids' Foundation School" <${smtpUser}>`,
       to: recipients,
       replyTo: `"${cleanName}" <${cleanEmail}>`,
       subject: `[Contact Enquiry] ${safeSubject}`,
@@ -319,7 +313,7 @@ ${escapeHtml(cleanMessage)}
       {
         success: false,
         message:
-          "Unable to send your message right now due to a mail delivery error. Please try again in a moment or contact the school directly via phone/email.",
+          `Unable to send your message right now due to a mail delivery error. Please try again in a moment or call the school directly at ${contactMobile}.`,
       },
       { status: 500 }
     );

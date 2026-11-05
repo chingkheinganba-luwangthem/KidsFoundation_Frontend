@@ -72,30 +72,40 @@ export function Header({ headerData, globalData }: HeaderProps = {}) {
   const logo = headerData?.logo || globalData?.logo;
   const logoSrc = logo ? getStrapiMediaUrl(logo) : "";
 
-  // Parse name into School Name & Location if needed
-  const rawName = headerData?.name || "";
-  let derivedSchoolName = "";
-  let derivedLocation = "";
+  // School Name & Location matching Image 3 design:
+  // Line 1: "KIDS' FOUNDATION"
+  // Line 2: "IMPHAL Manipur"
+  const rawName = headerData?.name || globalData?.schoolName || "KIDS' FOUNDATION";
+  let schoolName = "KIDS' FOUNDATION";
+  let locationText = "IMPHAL Manipur";
+
   if (rawName) {
-    if (rawName.includes(",")) {
+    if (/KIDS'?\s*FOUNDATION/i.test(rawName)) {
+      schoolName = "KIDS' FOUNDATION";
+      const remaining = rawName
+        .replace(/KIDS'?\s*FOUNDATION/i, "")
+        .trim()
+        .replace(/^[\s,-]+/, "")
+        .replace(/[\s,-]+$/, "");
+      if (remaining) {
+        if (/^IMPHAL$/i.test(remaining)) {
+          locationText = "IMPHAL Manipur";
+        } else {
+          locationText = remaining.replace(/,\s*/g, " ");
+        }
+      }
+    } else if (rawName.includes(",")) {
       const parts = rawName.split(",");
-      derivedSchoolName = parts[0]?.trim() || rawName;
-      derivedLocation = parts.slice(1).join(",").trim();
+      schoolName = parts[0]?.trim() || rawName;
+      locationText = parts.slice(1).join(" ").trim();
     } else {
-      derivedSchoolName = rawName;
+      schoolName = rawName;
     }
   }
 
-  const schoolName =
-    headerData?.schoolName ||
-    globalData?.schoolName ||
-    derivedSchoolName ||
-    "";
-  const locationText =
-    headerData?.location ||
-    globalData?.location ||
-    derivedLocation ||
-    "";
+  if (headerData?.location) {
+    locationText = headerData.location;
+  }
 
   const topNoticeText = headerData?.topNoticeText || globalData?.topNoticeText;
   const topNoticeLink = headerData?.topNoticeLink || globalData?.topNoticeLink;
