@@ -365,8 +365,8 @@ export function Footer({
 
             {/* Bottom Subtle Divider and Copyright */}
             {copyright && (
-              <div className="mt-10 sm:mt-14 pt-6 sm:pt-8 border-t border-slate-200/70 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
-                <p className="text-xs sm:text-[12.5px] text-[#64748B] font-normal">
+              <div className="mt-10 sm:mt-14 pt-6 sm:pt-8 border-t border-slate-200/70 flex items-center justify-center text-center">
+                <p className="text-xs sm:text-[12.5px] text-[#64748B] font-normal text-center">
                   {copyright}
                 </p>
               </div>
